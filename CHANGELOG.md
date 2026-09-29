@@ -11,7 +11,6 @@
 - Novidades calculadas por usuário/aparelho sem alterar as três aplicações atuais.
 - COTAR documentado como integração parcial até receber sincronização compartilhada.
 
-
 ## 1.0.1 — 2026-09-29
 
 - Corrigido o entendimento da persistência: atualizações são gravadas somente na O.S. real.
@@ -20,3 +19,16 @@
 - Reuso da sessão do SAAS-2 quando disponível no mesmo domínio.
 - Cache versionado para evitar carregar JS antigo.
 - Validação automática de JavaScript adicionada no GitHub Actions.
+
+## 1.1.0 — 2026-09-29
+
+- Responsividade refeita para celular, tablet e desktop sem rolagem lateral de componentes operacionais.
+- Tema claro e escuro com preferência salva no aparelho.
+- Botões de voltar no dashboard e na tela da viatura; dock móvel com ações rápidas.
+- Gestão (`gestor`, `gerente`, `admin`, `superadmin`, `dono` e equivalentes) pode marcar peças como **trocadas**, serviços como **executados** e peças como **compradas**.
+- Equipe/mecânicos pode marcar somente **trocado/executado**; compra é bloqueada tanto na interface quanto na função de gravação.
+- Execução usa o campo real `execucaoItens` já adotado pelo SAAS-2, com as chaves `peca-N` e `servico-N`.
+- Compra manual é registrada em `centralComprasItens` dentro do próprio documento de `ordens_servico`, sem criar coleção paralela e sem fingir vínculo fiscal.
+- Toda ação da Central gera `centralViaturasRelatorio` dentro da mesma O.S. e também acrescenta uma linha de auditoria em `timeline`.
+- Recados continuam em `etapasInternas`, agora também refletidos no relatório operacional da própria O.S.
+- Nenhum valor financeiro foi adicionado ao painel.

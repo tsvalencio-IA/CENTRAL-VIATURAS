@@ -2,15 +2,36 @@
 
 Central operacional para acompanhamento das viaturas da S.O.S. Valêncio, criada para abrir por links enviados no grupo de WhatsApp e reunir informações que já existem nos sistemas da oficina.
 
-## Fontes integradas
+## Firebase e fonte de verdade
 
-- `tsvalencio-IA/SAAS-2`: O.S., veículos, clientes, etapas/recados internos, peças da O.S., vínculos de NF e cotações do Firebase.
+A Central usa exatamente o projeto Firebase oficial do `SAAS-2`: `hub-thiaguinho`.
+
+Não existe banco paralelo para o acompanhamento. Tudo que o usuário altera na Central é salvo no próprio documento da viatura em `ordens_servico`:
+
+- `etapasInternas`: recados/orientações internas, no mesmo formato já utilizado pelo SaaS;
+- `execucaoItens`: peça trocada e serviço executado, compatível com a rotina real da equipe do SAAS-2;
+- `centralComprasItens`: marcação operacional manual de peça comprada, separada de vínculo fiscal;
+- `centralViaturasRelatorio`: histórico auditável das ações feitas pela Central;
+- `timeline`: registro resumido adicional da alteração;
+- `updatedAt` / `centralViaturasAtualizadoEm`: atualização em tempo real e indicação de novidade.
+
+A marcação manual de **comprada** não cria NF falsa e não grava `comprada_vinculada_nf`. Vínculo fiscal real continua vindo de `nf_itens_vinculos`/entrada de NF do SAAS-2.
+
+## Permissões
+
+- Gestor, gerente, admin, superadmin, dono/proprietário: podem marcar **trocado**, **executado** e **comprado**.
+- Equipe, mecânicos e técnicos: podem marcar **trocado** e **executado**, mas não conseguem marcar compra.
+- A restrição de compra é aplicada no JavaScript de gravação, não apenas escondida na tela.
+
+## Integrações
+
+- `tsvalencio-IA/SAAS-2`: O.S., veículos, clientes, aprovação, `execucaoItens`, etapas/recados internos, peças, NF e cotações do Firebase.
 - `tsvalencio-IA/CHECKLIS_SOS`: o checklist já anexa `checklistResumo`, `checklistUltimo` e `checklistsTecnicos` diretamente na O.S.; a Central lê esses dados sem duplicá-los.
-- `tsvalencio-IA/COTAR`: atualmente mantém o comparador principal em `localStorage`. A Central identifica esta limitação e não inventa sincronização entre aparelhos. A próxima integração será publicar um resumo operacional no Firebase, sem remover o funcionamento local atual.
+- `tsvalencio-IA/COTAR`: atualmente mantém o comparador principal em `localStorage`. A Central não inventa sincronização inexistente; a futura integração deverá publicar apenas um resumo operacional compartilhado.
 
 ## Regra principal
 
-A Central **não mostra valores**. Campos de preço, custo, margem, lucro, total, pagamento e recebimento não são exibidos neste aplicativo.
+A Central **não mostra valores**. Preço, custo, margem, lucro, total, pagamento e recebimento ficam fora deste aplicativo.
 
 ## Link individual
 
@@ -20,33 +41,23 @@ Exemplo:
 
 Também é aceito `&os=<ID_DA_OS>` para abrir uma O.S. exata.
 
-## O que já funciona na V1
+## Interface V1.1
 
-- login com a mesma lógica operacional usada pelo Checklist/SaaS;
-- tenant/oficina preservado;
-- dashboard responsivo com viaturas ativas, novidades e recados pendentes;
-- busca por placa, veículo, O.S. ou cliente;
-- atualização em tempo real das O.S.;
-- tela individual por placa;
-- checklist e pendências da O.S.;
-- recados internos gravados no mesmo campo `etapasInternas` já usado pelo SaaS;
-- marcar/reabrir recado sem criar uma segunda fonte de verdade;
-- peças da O.S. sem valores;
-- tentativa controlada de leitura de `nf_itens_vinculos` e `cotacoes_pecas` quando o perfil/regras permitem;
-- compartilhamento do link e atalho para WhatsApp;
-- PWA básica;
-- indicador de novidade por usuário/aparelho, usando o horário de atividade da O.S.
+- responsividade automática para celular, tablet e PC;
+- tema claro/escuro;
+- botões voltar;
+- dock inferior no celular;
+- dashboard em tempo real;
+- tela individual da placa;
+- painel de execução e compras por perfil;
+- checklist e pendências;
+- recados internos;
+- peças da O.S.;
+- vínculos de NF sem preço;
+- cotações compartilhadas sem preço;
+- relatório operacional da própria O.S. por data e usuário;
+- compartilhamento para WhatsApp.
 
-## Não alterado
+## Sistemas preservados
 
-Esta primeira implantação não altera nenhum arquivo de `SAAS-2`, `CHECKLIS_SOS` ou `COTAR`.
-
-
-## Correção V1.0.1
-
-- O Firebase é exatamente o mesmo projeto oficial do SAAS-2: `hub-thiaguinho`.
-- A Central não cria banco paralelo para recados/notificações.
-- Toda atualização operacional feita pela Central é gravada diretamente no documento real de `ordens_servico` da viatura.
-- O relatório usa o mesmo campo `etapasInternas` já existente no SAAS-2. O próprio SAAS-2 já usa esse campo para gerar o relatório interno da O.S.
-- O indicador de novidade é derivado dos horários da própria O.S.; não depende de uma coleção separada.
-- Login/sessão foram alinhados ao fluxo real do SAAS-2 e a Central reaproveita a sessão já existente quando possível.
+A V1.1 não altera os arquivos do `SAAS-2`, `CHECKLIS_SOS` ou `COTAR`. Ela usa e respeita os dados reais existentes nesses sistemas.
