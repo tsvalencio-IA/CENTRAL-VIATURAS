@@ -65,3 +65,13 @@
 - Compartilhamento volta a usar somente `v.html?PLACA` no domínio GitHub Pages.
 - `v.html` ganhou metadados Open Graph estáticos para uma prévia mais limpa no WhatsApp.
 - Documentada a limitação real: GitHub Pages não consegue gerar Open Graph diferente por parâmetro de placa.
+
+
+## 1.3.0 — 2026-09-29
+
+- Removida a lista de peças orçadas da O.S. do acompanhamento operacional.
+- Peças agora vêm exclusivamente dos registros reais da O.S. equivalentes à área interna de peças realmente instaladas.
+- Entrada de NF marcada como apenas comprada/vinculada não é tratada como peça trocada.
+- Serviços continuam vindo normalmente de `servicos` da O.S.
+- Adicionado registro de peça realmente trocada diretamente pelo dashboard, gravando em `pecasReais`.
+- Mantida separação de permissões: equipe registra troca/execução; gestão também controla compra operacional.
