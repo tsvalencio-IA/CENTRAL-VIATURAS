@@ -113,3 +113,15 @@
 - Novo PNG gerado por `@vercel/og`, com renderização de texto própria para Open Graph.
 - Mantida área segura central para WhatsApp Desktop/Web e WhatsApp mobile.
 - Cache do compartilhamento alterado para `?v=143`.
+
+
+## 1.4.4 — 2026-09-29
+
+- PWA concluída para instalação no PC e celular.
+- Botão INSTALAR APP aparece automaticamente quando o navegador permite instalação.
+- No Android/Chrome/Edge, o botão abre o prompt nativo de instalação.
+- No iPhone/iPad, o botão orienta o fluxo Compartilhar → Adicionar à Tela de Início.
+- Criado ícone profissional dinâmico da Central de Viaturas em 64, 180, 192 e 512 px.
+- Manifesto ganhou ícones normal e maskable, categorias, ID, orientação e atalhos.
+- Adicionado favicon e Apple Touch Icon.
+- Service worker deixou de tentar armazenar Firebase/CDNs/serviços externos no cache.
