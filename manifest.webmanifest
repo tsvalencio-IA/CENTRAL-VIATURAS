@@ -1,0 +1,11 @@
+{
+  "name": "Central de Viaturas",
+  "short_name": "Viaturas",
+  "description": "Acompanhamento operacional de viaturas integrado ao OFICIN-IA",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1118",
+  "theme_color": "#0b1118",
+  "lang": "pt-BR"
+}
