@@ -7,8 +7,9 @@ function cleanPlate(value) {
 
 const h = React.createElement;
 
-export default async function handler(req) {
-  const plate = cleanPlate(req?.query?.placa || new URL(req.url, 'https://viaturas.vercel.app').searchParams.get('placa'));
+export async function GET(request) {
+  const url = new URL(request.url);
+  const plate = cleanPlate(url.searchParams.get('placa'));
   if (!plate) return new Response('Placa inválida.', { status: 400 });
 
   const page = h('div', {
