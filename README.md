@@ -75,3 +75,14 @@ O botão **WHATSAPP** envia:
 A página `v.html` possui metadados Open Graph estáticos para o WhatsApp exibir o nome **Central de Viaturas** e a descrição **ABRIR VIATURA • Acompanhamento operacional**.
 
 Limitação técnica do GitHub Pages: como ele entrega arquivos estáticos, o robô do WhatsApp não executa JavaScript e não consegue transformar o parâmetro `?PLACA` em um título/imagem Open Graph diferente para cada placa. Portanto, a placa fica no texto da mensagem e no link; um cartão visual diferente por placa exige uma resposta dinâmica no servidor.
+
+
+## V1.3 — verdade operacional de peças
+
+- Serviços exibidos: `ordens_servico.servicos`.
+- Peças exibidas: somente peças realmente trocadas/instaladas da fonte interna da O.S. (`pecasReais`, `pecasRealmenteTrocadas`, `itensReais`).
+- A Central não usa `ordens_servico.pecas` para dizer que uma peça foi trocada.
+- Registros de NF com `statusAplicacao = comprada_vinculada_nf` e indicação de que ainda não houve instalação são excluídos da lista de peças trocadas.
+- Equipe autenticada pode registrar uma nova peça realmente trocada; ela é gravada diretamente em `pecasReais` da própria O.S.
+- Serviços continuam com controle de executado; peças reais já entram como TROCADA REAL.
+- Gestão pode manter a informação operacional de compra para peças reais quando não houver vínculo fiscal confirmado.
