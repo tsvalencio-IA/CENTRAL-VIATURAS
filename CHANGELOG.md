@@ -56,3 +56,12 @@
 - Clique no cartão redireciona para a tela real da viatura.
 - Projeto preparado para implantação Vercel sem substituir o GitHub Pages atual.
 - Compartilhamento usa automaticamente o preview Vercel quando a Central estiver rodando em domínio `.vercel.app`.
+
+
+## 1.2.1 — 2026-09-29
+
+- Projeto mantido exclusivamente no GitHub Pages.
+- Removidos `vercel.json`, `package.json` e endpoints `api/share.js` / `api/og.js`.
+- Compartilhamento volta a usar somente `v.html?PLACA` no domínio GitHub Pages.
+- `v.html` ganhou metadados Open Graph estáticos para uma prévia mais limpa no WhatsApp.
+- Documentada a limitação real: GitHub Pages não consegue gerar Open Graph diferente por parâmetro de placa.
