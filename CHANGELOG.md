@@ -46,3 +46,13 @@
 - Link encurtado para `v.html?PLACA`.
 - Removidos emojis, instruções extras e ID da O.S. da mensagem compartilhada.
 - O WhatsApp continua exigindo a seleção da conversa/grupo, pois o recurso oficial de link com mensagem pronta não permite pré-selecionar um grupo.
+
+
+## 1.2.0 — 2026-09-29
+
+- Criado endpoint dinâmico `/p/PLACA` para o WhatsApp ler Open Graph antes de abrir a página.
+- Criada imagem PNG dinâmica 1200×630 com a placa da viatura.
+- Cartão passa a apresentar título `🚙 PLACA` e descrição `ABRIR VIATURA • Central de Viaturas`.
+- Clique no cartão redireciona para a tela real da viatura.
+- Projeto preparado para implantação Vercel sem substituir o GitHub Pages atual.
+- Compartilhamento usa automaticamente o preview Vercel quando a Central estiver rodando em domínio `.vercel.app`.
