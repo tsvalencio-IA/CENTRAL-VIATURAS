@@ -40,3 +40,13 @@ Também é aceito `&os=<ID_DA_OS>` para abrir uma O.S. exata.
 ## Não alterado
 
 Esta primeira implantação não altera nenhum arquivo de `SAAS-2`, `CHECKLIS_SOS` ou `COTAR`.
+
+
+## Correção V1.0.1
+
+- O Firebase é exatamente o mesmo projeto oficial do SAAS-2: `hub-thiaguinho`.
+- A Central não cria banco paralelo para recados/notificações.
+- Toda atualização operacional feita pela Central é gravada diretamente no documento real de `ordens_servico` da viatura.
+- O relatório usa o mesmo campo `etapasInternas` já existente no SAAS-2. O próprio SAAS-2 já usa esse campo para gerar o relatório interno da O.S.
+- O indicador de novidade é derivado dos horários da própria O.S.; não depende de uma coleção separada.
+- Login/sessão foram alinhados ao fluxo real do SAAS-2 e a Central reaproveita a sessão já existente quando possível.
