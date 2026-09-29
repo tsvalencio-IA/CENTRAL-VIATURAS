@@ -13,7 +13,7 @@ module.exports = function handler(req, res) {
   const host = req.headers.host;
   const origin = proto + '://' + host;
   const target = 'https://tsvalencio-ia.github.io/CENTRAL-VIATURAS/v.html?' + encodeURIComponent(plate);
-  const image = origin + '/preview/' + encodeURIComponent(plate);
+  const image = origin + '/preview/' + encodeURIComponent(plate) + '?v=142';
   const title = '🚙 ' + plate;
   const description = 'ABRIR VIATURA • Central de Viaturas';
   res.setHeader('Content-Type','text/html; charset=utf-8');
@@ -29,6 +29,7 @@ module.exports = function handler(req, res) {
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Placa ${esc(plate)} — abrir acompanhamento da viatura">
 <meta property="og:url" content="${esc(origin + '/p/' + plate)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
