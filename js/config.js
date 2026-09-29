@@ -1,7 +1,7 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.0.0',
+  version: '1.0.1',
   appName: 'Central de Viaturas',
   footer: 'Powered by thIAguinho Soluções Digitais',
   firebaseConfig: {
@@ -18,16 +18,16 @@ window.CENTRAL_CONFIG = {
     os: 'ordens_servico',
     veiculos: 'veiculos',
     clientes: 'clientes',
-    checklists: 'checklists',
     nfVinculos: 'nf_itens_vinculos',
-    cotacoes: 'cotacoes_pecas',
-    notificacoes: 'notificacoes_live'
+    cotacoes: 'cotacoes_pecas'
   },
-  activeStatuses: ['Triagem','Orcamento','Orcamento_Enviado','Aprovado','Andamento','Pronto','Em Serviço','Serviço Aprovado','Veículo Pronto'],
-  hiddenValueKeys: ['valor','preco','preço','custo','total','margem','lucro','desconto','descontoPercentual','venda','valorUnitario','valorTotal','financeiro','pagamento','recebimento'],
+  activeStatuses: [
+    'Triagem','Orcamento','Orcamento_Enviado','Aprovado','Andamento','Pronto',
+    'Serviço Aprovado','Em Serviço','Veículo Pronto'
+  ],
   rolesPermitidos: [
-    'mecanico','mecânico','tecnico','técnico','gerente','gestor','dono','proprietario','proprietário',
-    'administrativo','admin','admin master','adminmaster','admin_master','admin-oficina','admin oficina',
+    'mecanico','mecânico','tecnico','técnico','gerente','gestor','dono',
+    'proprietario','proprietário','administrativo','admin','administrador',
     'financeiro','recepcionista','superadmin','master'
   ]
 };
