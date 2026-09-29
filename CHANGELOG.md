@@ -38,3 +38,11 @@
 - Compartilhamento do WhatsApp agora usa somente a placa no link público, sem expor o ID da O.S.
 - Mensagem compartilhada destaca a placa como um pseudo-botão visual: `🟩 *[ PLACA ]*` + `🔧 ABRIR ACOMPANHAMENTO DA VIATURA`.
 - Link canônico gerado no formato `viatura.html?placa=PLACA`.
+
+
+## 1.1.2 — 2026-09-29
+
+- Botão WhatsApp gera somente: `ATUALIZAÇÃO PLACA "PLACA" LINK`.
+- Link encurtado para `v.html?PLACA`.
+- Removidos emojis, instruções extras e ID da O.S. da mensagem compartilhada.
+- O WhatsApp continua exigindo a seleção da conversa/grupo, pois o recurso oficial de link com mensagem pronta não permite pré-selecionar um grupo.
