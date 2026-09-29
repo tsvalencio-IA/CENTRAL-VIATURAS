@@ -86,3 +86,15 @@ Limitação técnica do GitHub Pages: como ele entrega arquivos estáticos, o ro
 - Equipe autenticada pode registrar uma nova peça realmente trocada; ela é gravada diretamente em `pecasReais` da própria O.S.
 - Serviços continuam com controle de executado; peças reais já entram como TROCADA REAL.
 - Gestão pode manter a informação operacional de compra para peças reais quando não houver vínculo fiscal confirmado.
+
+
+## V1.4 — Checklist SOS como plano operacional
+
+- A Central lê o `checklistOperacional` gravado pelo CHECKLIS_SOS V15.24; checklists antigos continuam funcionando por fallback de `checklistResumo.itens`.
+- Blocos separados e minimizáveis: Serviços da O.S.; Peças a trocar; Serviços a executar; Atenções/observar; Concluídos/executados.
+- Ao concluir, o item sai do bloco pendente e aparece automaticamente em Concluídos/executados.
+- Peça de checklist marcada como trocada também entra em `pecasReais` da própria O.S., mantendo a mesma fonte usada para peças realmente trocadas.
+- Reabrir essa troca remove somente o registro de peça real criado a partir daquele item do checklist.
+- Gestão pode marcar as peças exigidas pelo checklist como compradas antes da troca.
+- Execução e compra de itens do checklist geram timeline da O.S., relatório da Central e registro em `lixeira_auditoria`.
+- Botão IMPRIMIR gera relatório A4 operacional sem valores financeiros.
