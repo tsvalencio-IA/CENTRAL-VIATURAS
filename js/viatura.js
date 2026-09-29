@@ -47,11 +47,11 @@
     if(gestor){
       badge.textContent='GESTÃO';
       badge.className='permission-badge manager';
-      el.innerHTML='<b>Gestor / gerente / admin:</b> pode registrar peça trocada, serviço executado e peça comprada. Tudo fica gravado dentro da própria O.S.';
+      el.innerHTML='<b>Gestor / gerente / admin:</b> pode registrar peça realmente trocada, marcar serviço executado e registrar compra. As peças exibidas vêm somente do controle real da O.S., nunca da lista de peças orçadas.';
     }else{
       badge.textContent='EQUIPE';
       badge.className='permission-badge team';
-      el.innerHTML='<b>Equipe:</b> pode registrar peça trocada e serviço executado. A marcação de compra fica disponível somente para gestão.';
+      el.innerHTML='<b>Equipe:</b> pode registrar peça realmente trocada e marcar serviço executado. A marcação de compra fica disponível somente para gestão.';
     }
   }
 
@@ -107,24 +107,28 @@
     const root=$('operationalItems');
     const items=D.operationalItems(os);
     if(!items.length){
-      root.innerHTML='<div class="empty">Esta O.S. ainda não possui peças ou serviços cadastrados para acompanhamento.</div>';
+      root.innerHTML='<div class="empty">Nenhum serviço da O.S. ou peça realmente trocada foi encontrado.</div>';
       return;
     }
     const gestor=D.isManager(session);
     root.innerHTML=items.map(item=>{
       const execStatus=String(item.execucao?.status||'pendente');
-      const done=D.executionFinished(execStatus);
+      const done=item.real===true ? true : D.executionFinished(execStatus);
       const bought=item.tipo==='peca'&&(item.compra?.comprado===true||item.compraFiscal===true);
       const boughtSource=item.compraFiscal===true?'NF vinculada':(item.compra?.comprado===true?'Gestão':'');
       const disabled=item.approvalExists&&!item.aprovado;
-      const execLabel=item.tipo==='peca'?'MARCAR TROCADA':'MARCAR EXECUTADO';
       const execClass=done?'btn success':'btn primary';
-      const approvalChip=disabled?'<span class="state-chip warn">NÃO APROVADO</span>':(item.approvalExists?'<span class="state-chip ok">APROVADO</span>':'');
-      const execChip=done?`<span class="state-chip ok">${item.tipo==='peca'?'TROCADA':'EXECUTADO'}</span>`:'<span class="state-chip">PENDENTE</span>';
-      const buyChip=item.tipo==='peca'?(bought?`<span class="state-chip bought">COMPRADA${boughtSource?' • '+D.escapeHtml(boughtSource):''}</span>`:'<span class="state-chip">COMPRA PENDENTE</span>'):'';
+      const approvalChip=item.real?'':(disabled?'<span class="state-chip warn">NÃO APROVADO</span>':(item.approvalExists?'<span class="state-chip ok">APROVADO</span>':''));
+      const execChip=item.real
+        ? '<span class="state-chip ok">TROCADA REAL</span>'
+        : (done?'<span class="state-chip ok">EXECUTADO</span>':'<span class="state-chip">PENDENTE</span>');
+      const buyChip=item.tipo==='peca'?(bought?`<span class="state-chip bought">COMPRADA${boughtSource?' • '+D.escapeHtml(boughtSource):''}</span>`:'<span class="state-chip">COMPRA NÃO INFORMADA</span>'):'';
       const buyButton=item.tipo==='peca'&&gestor
         ? `<button class="btn ${bought?'':'purchase'}" data-buy-key="${D.escapeHtml(item.key)}" data-bought="${bought?'1':'0'}">${bought?'DESMARCAR COMPRA':'MARCAR COMPRADA'}</button>`
         : '';
+      const execButton=item.real
+        ? ''
+        : `<button class="${execClass}" data-exec-key="${D.escapeHtml(item.key)}" data-done="${done?'1':'0'}" ${disabled?'disabled title="Item não aprovado"':''}>${done?'REABRIR':'MARCAR EXECUTADO'}</button>`;
       return `
         <article class="op-row ${done?'is-done':''} ${disabled?'is-disabled':''}">
           <div class="op-main">
@@ -136,7 +140,7 @@
             ${item.compra?.comprado&&item.compra?.compradoPor?`<div class="op-audit">Compra: ${D.escapeHtml(item.compra.compradoPor)}${item.compra.compradoEm?' • '+D.escapeHtml(D.fmt(item.compra.compradoEm)):''}</div>`:''}
           </div>
           <div class="op-actions">
-            <button class="${execClass}" data-exec-key="${D.escapeHtml(item.key)}" data-done="${done?'1':'0'}" ${disabled?'disabled title="Item não aprovado"':''}>${done?'REABRIR':execLabel}</button>
+            ${execButton}
             ${buyButton}
           </div>
         </article>`;
@@ -166,13 +170,13 @@
   function renderPieces(){
     const pieces=D.osPieces(os),root=$('pieces');
     if(!pieces.length){
-      root.innerHTML='<div class="empty">Nenhuma peça operacional registrada diretamente nesta O.S.</div>';
+      root.innerHTML='<div class="empty">Nenhuma peça realmente trocada registrada no controle real desta O.S.</div>';
       return;
     }
     root.innerHTML=pieces.map(p=>`
       <div class="row">
         <div class="row-title">${D.escapeHtml(p.descricao||p.codigo)}</div>
-        <div class="row-meta">${p.codigo?'Cód. '+D.escapeHtml(p.codigo)+' • ':''}Qtd. ${D.escapeHtml(p.qtd)}${p.status?' • '+D.escapeHtml(p.status):''}</div>
+        <div class="row-meta">${p.codigo?'Cód. '+D.escapeHtml(p.codigo)+' • ':''}Qtd. ${D.escapeHtml(p.qtd)}${p.fornecedor?' • '+D.escapeHtml(p.fornecedor):''}${p.nfNumero?' • NF '+D.escapeHtml(p.nfNumero):''}</div>
       </div>`).join('');
   }
 
@@ -213,7 +217,8 @@
       desmarcou_peca_comprada:'Compra desmarcada',
       registrou_recado:'Recado registrado',
       concluiu_recado:'Recado concluído',
-      reabriu_recado:'Recado reaberto'
+      reabriu_recado:'Recado reaberto',
+      registrou_peca_real_trocada:'Peça realmente trocada registrada'
     };
     return map[a]||'Atualização da Central';
   }
@@ -369,6 +374,27 @@
     await A.logout();
     showLogin();
   }));
+
+  const realPartForm=$('realPartForm');
+  if(realPartForm) realPartForm.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const descricao=$('realPartDesc')?.value?.trim()||'';
+    const codigo=$('realPartCode')?.value?.trim()||'';
+    const qtd=Number($('realPartQty')?.value||1)||1;
+    const btn=$('addRealPart');
+    if(btn) btn.disabled=true;
+    try{
+      await D.addRealPart(db,session,os.id,{descricao,codigo,qtd});
+      if($('realPartDesc')) $('realPartDesc').value='';
+      if($('realPartCode')) $('realPartCode').value='';
+      if($('realPartQty')) $('realPartQty').value='1';
+      toast('Peça registrada como realmente trocada na própria O.S.','ok');
+    }catch(e){
+      toast(e.message||'Não foi possível registrar a peça trocada.','err');
+    }finally{
+      if(btn) btn.disabled=false;
+    }
+  });
 
   $('recadoForm').addEventListener('submit',async ev=>{
     ev.preventDefault();
