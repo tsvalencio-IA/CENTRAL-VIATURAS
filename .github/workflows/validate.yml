@@ -1,0 +1,32 @@
+name: Validar Central de Viaturas
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Validar JavaScript
+        run: |
+          node --check js/config.js
+          node --check js/auth.js
+          node --check js/data.js
+          node --check js/index.js
+          node --check js/viatura.js
+      - name: Verificar arquivos principais
+        run: |
+          test -f index.html
+          test -f viatura.html
+          test -f css/app.css
+          test -f manifest.webmanifest
+          test -f service-worker.js
