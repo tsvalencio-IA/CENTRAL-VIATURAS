@@ -63,15 +63,15 @@ Também é aceito `&os=<ID_DA_OS>` para abrir uma O.S. exata.
 A V1.1 não altera os arquivos do `SAAS-2`, `CHECKLIS_SOS` ou `COTAR`. Ela usa e respeita os dados reais existentes nesses sistemas.
 
 
-## Preview profissional do WhatsApp
 
-A V1.2 inclui uma camada dinâmica própria para o cartão de pré-visualização do WhatsApp:
+## Compartilhamento no WhatsApp — GitHub Pages
 
-- `/p/PLACA` → página Open Graph dinâmica;
-- `/preview/PLACA` → imagem PNG 1200×630 gerada dinamicamente com a placa;
-- título do cartão: `🚙 PLACA`;
-- descrição: `ABRIR VIATURA • Central de Viaturas`;
-- ao tocar no cartão, o usuário é redirecionado para `v.html?PLACA`;
-- nenhuma informação financeira é exposta na prévia.
+A Central permanece publicada somente no GitHub Pages.
 
-Essa camada depende de uma implantação Vercel do próprio repositório. O GitHub Pages continua funcionando normalmente como fallback.
+O botão **WHATSAPP** envia:
+
+`ATUALIZAÇÃO PLACA "PLACA" https://tsvalencio-ia.github.io/CENTRAL-VIATURAS/v.html?PLACA`
+
+A página `v.html` possui metadados Open Graph estáticos para o WhatsApp exibir o nome **Central de Viaturas** e a descrição **ABRIR VIATURA • Acompanhamento operacional**.
+
+Limitação técnica do GitHub Pages: como ele entrega arquivos estáticos, o robô do WhatsApp não executa JavaScript e não consegue transformar o parâmetro `?PLACA` em um título/imagem Open Graph diferente para cada placa. Portanto, a placa fica no texto da mensagem e no link; um cartão visual diferente por placa exige uma resposta dinâmica no servidor.
