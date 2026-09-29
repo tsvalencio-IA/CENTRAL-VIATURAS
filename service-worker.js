@@ -1,4 +1,4 @@
-const CACHE='central-viaturas-v1-4-1';
+const CACHE='central-viaturas-v1-4-2';
 const ASSETS=[
   './','./index.html','./viatura.html','./v.html','./css/app.css',
   './js/config.js','./js/theme.js','./js/auth.js','./js/data.js','./js/index.js','./js/viatura.js','./manifest.webmanifest'
