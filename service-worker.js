@@ -1,6 +1,6 @@
-const CACHE='central-viaturas-v1-1-1';
+const CACHE='central-viaturas-v1-1-2';
 const ASSETS=[
-  './','./index.html','./viatura.html','./css/app.css',
+  './','./index.html','./viatura.html','./v.html','./css/app.css',
   './js/config.js','./js/theme.js','./js/auth.js','./js/data.js','./js/index.js','./js/viatura.js','./manifest.webmanifest'
 ];
 self.addEventListener('install',event=>{
