@@ -315,14 +315,27 @@
     await subscribe();
   }
 
+  function shareUrl(){
+    const url=new URL('viatura.html',location.href);
+    url.search='';
+    url.hash='';
+    url.searchParams.set('placa',currentPlate());
+    return url.toString();
+  }
+
+  function shareMessage(){
+    const p=currentPlate();
+    return `🟩 *[ ${p} ]*\n🔧 *ABRIR ACOMPANHAMENTO DA VIATURA*\n👇 Toque no link abaixo:\n${shareUrl()}`;
+  }
+
   async function shareCurrent(){
-    const url=location.href;
-    const text=`${currentPlate()} — acompanhar viatura\n${url}`;
+    const url=shareUrl();
+    const text=shareMessage();
     try{
-      if(navigator.share) await navigator.share({title:`Viatura ${currentPlate()}`,text,url});
+      if(navigator.share) await navigator.share({title:`🚙 ${currentPlate()} — Central de Viaturas`,text,url});
       else{
         await navigator.clipboard.writeText(text);
-        toast('Link copiado.','ok');
+        toast('Link da placa copiado.','ok');
       }
     }catch(e){
       if(e.name!=='AbortError') toast('Não foi possível compartilhar.','err');
@@ -330,7 +343,7 @@
   }
 
   function whatsappCurrent(){
-    const text=encodeURIComponent(`${currentPlate()} — ACOMPANHAR VIATURA\n${location.href}`);
+    const text=encodeURIComponent(shareMessage());
     window.open(`https://wa.me/?text=${text}`,'_blank','noopener');
   }
 
