@@ -75,3 +75,15 @@
 - Serviços continuam vindo normalmente de `servicos` da O.S.
 - Adicionado registro de peça realmente trocada diretamente pelo dashboard, gravando em `pecasReais`.
 - Mantida separação de permissões: equipe registra troca/execução; gestão também controla compra operacional.
+
+
+## 1.4.0 — 2026-09-29
+
+- Integração operacional direta com CHECKLIS_SOS V15.24.
+- Separação de Serviços da O.S., Peças a trocar, Serviços do checklist, Atenções e Concluídos.
+- Blocos minimizáveis.
+- Itens concluídos migram visualmente para a seção de concluídos.
+- Compra de peça do checklist disponível somente para gestão.
+- Troca de peça do checklist alimenta `pecasReais`.
+- Auditoria global e timeline para execução/compra do checklist.
+- Impressão A4 do relatório operacional.
