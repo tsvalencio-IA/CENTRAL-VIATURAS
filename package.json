@@ -1,0 +1,7 @@
+{
+  "name": "central-viaturas",
+  "version": "1.4.1",
+  "private": true,
+  "engines": { "node": "22.x" },
+  "dependencies": { "sharp": "^0.34.4" }
+}
