@@ -317,8 +317,17 @@
   }
 
   function shareUrl(){
+    const p=encodeURIComponent(currentPlate());
+    const host=String(location.hostname||'').toLowerCase();
+    if(host.endsWith('.vercel.app')){
+      return `${location.origin}/p/${p}`;
+    }
+    const configured=String(window.CENTRAL_CONFIG?.sharePreviewBase||'').trim().replace(/\/$/,'');
+    if(configured){
+      return `${configured}/p/${p}`;
+    }
     const url=new URL('v.html',location.href);
-    url.search='?'+encodeURIComponent(currentPlate());
+    url.search='?'+p;
     url.hash='';
     return url.toString();
   }
