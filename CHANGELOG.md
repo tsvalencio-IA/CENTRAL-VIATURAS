@@ -87,3 +87,11 @@
 - Troca de peça do checklist alimenta `pecasReais`.
 - Auditoria global e timeline para execução/compra do checklist.
 - Impressão A4 do relatório operacional.
+
+
+## 1.4.1 — 2026-09-29
+
+- O botão WHATSAPP passa a compartilhar a rota dinâmica da Vercel: `https://viaturas.vercel.app/p/PLACA`.
+- A mensagem continua mínima: `ATUALIZAÇÃO PLACA "PLACA" LINK`.
+- A rota dinâmica entrega Open Graph com título da placa e PNG 1200×630 gerado para cada viatura.
+- Ao tocar no cartão, o usuário é redirecionado para a viatura real no GitHub Pages.
