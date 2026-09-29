@@ -66,3 +66,14 @@ button,input,select,textarea{font:inherit;max-width:100%}button{touch-action:man
   .detail-title h1{font-size:31px}.detail-title p{font-size:10px}.op-actions{grid-template-columns:1fr}.op-actions .btn{min-height:44px}.state-chip{font-size:8px}.row-title{font-size:11px}
 }
 @media(max-width:350px){.top-actions [data-theme-toggle]{display:none}.brand-text span{display:none}.stats{grid-template-columns:1fr 1fr}.op-statuses{gap:3px}.state-chip{padding:4px 6px}}
+
+.real-part-form{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(120px,.7fr) 90px auto;gap:8px;margin:10px 0 4px;align-items:center}
+.real-part-form .search{margin:0;min-height:42px}
+.real-part-form .qty{text-align:center}
+@media(max-width:720px){
+  .real-part-form{grid-template-columns:minmax(0,1fr) 86px}
+  .real-part-form #realPartDesc{grid-column:1/-1}
+  .real-part-form #realPartCode{grid-column:1/2}
+  .real-part-form #realPartQty{grid-column:2/3}
+  .real-part-form #addRealPart{grid-column:1/-1;width:100%}
+}
