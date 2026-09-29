@@ -444,7 +444,7 @@
   }
 
   function shareUrl(){
-    return 'https://viaturas.vercel.app/p/'+encodeURIComponent(currentPlate());
+    return 'https://viaturas.vercel.app/p/'+encodeURIComponent(currentPlate())+'?v=142';
   }
 
   function shareMessage(){
