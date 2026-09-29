@@ -61,3 +61,17 @@ Também é aceito `&os=<ID_DA_OS>` para abrir uma O.S. exata.
 ## Sistemas preservados
 
 A V1.1 não altera os arquivos do `SAAS-2`, `CHECKLIS_SOS` ou `COTAR`. Ela usa e respeita os dados reais existentes nesses sistemas.
+
+
+## Preview profissional do WhatsApp
+
+A V1.2 inclui uma camada dinâmica própria para o cartão de pré-visualização do WhatsApp:
+
+- `/p/PLACA` → página Open Graph dinâmica;
+- `/preview/PLACA` → imagem PNG 1200×630 gerada dinamicamente com a placa;
+- título do cartão: `🚙 PLACA`;
+- descrição: `ABRIR VIATURA • Central de Viaturas`;
+- ao tocar no cartão, o usuário é redirecionado para `v.html?PLACA`;
+- nenhuma informação financeira é exposta na prévia.
+
+Essa camada depende de uma implantação Vercel do próprio repositório. O GitHub Pages continua funcionando normalmente como fallback.
