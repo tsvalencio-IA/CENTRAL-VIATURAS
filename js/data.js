@@ -455,6 +455,7 @@
       const atual=snap.data()||{};
       const item=operationalItems(atual).find(x=>String(x.key)===String(itemKey));
       if(!item) throw new Error('Item não encontrado nesta O.S.');
+      if(item.real) throw new Error('Esta peça já é uma peça realmente trocada. Para corrigir esse registro, use o controle de peças reais da O.S.');
       if(item.approvalExists&&!item.aprovado) throw new Error('Item não aprovado. Não pode ser marcado como executado/trocado.');
       const execucaoItens={...(atual.execucaoItens||{})};
       const anterior=execucaoItens[item.key]||{};
@@ -490,6 +491,55 @@
       result={item,status,done};
     });
     return result;
+  }
+
+  async function addRealPart(db,session,osId,input){
+    if(!canExecute(session)) throw new Error('Seu perfil não pode registrar peça trocada.');
+    const descricao=String(input?.descricao||'').trim();
+    const codigo=String(input?.codigo||'').trim();
+    const qtd=Math.max(0.0001,Number(input?.qtd||1)||1);
+    if(!descricao&&!codigo) throw new Error('Informe a peça trocada.');
+
+    const ref=db.collection(CFG.collections.os).doc(osId);
+    const agora=new Date().toISOString();
+    let created=null;
+
+    await db.runTransaction(async tx=>{
+      const snap=await tx.get(ref);
+      if(!snap.exists) throw new Error('O.S. não encontrada.');
+      const atual=snap.data()||{};
+      const list=Array.isArray(atual.pecasReais)?atual.pecasReais.slice():[];
+      created={
+        idReal:eventId(),
+        origem:'central_viaturas',
+        statusAplicacao:'instalada',
+        codigo,
+        desc:descricao,
+        descricao,
+        qtd,
+        registradoEm:agora,
+        registradoPor:session.name||'Equipe',
+        registradoPorId:session.funcionarioId||session.email||'',
+        registradoPorPerfil:session.role||session.cargo||'equipe',
+        observacao:'Peça registrada como realmente trocada pela Central de Viaturas.'
+      };
+      list.push(created);
+
+      const ev=makeEvent(session,'peca_real','registrou_peca_real_trocada',{
+        descricao,codigo,qtd,status:'trocada'
+      });
+
+      tx.update(ref,{
+        pecasReais:list,
+        centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
+        timeline:pushTimeline(atual.timeline,session.name,`Central: registrou peça realmente trocada — ${descricao||codigo}`,agora),
+        centralViaturasAtualizadoEm:agora,
+        centralViaturasAtualizadoPor:session.name||'Usuário',
+        updatedAt:agora
+      });
+    });
+
+    return created;
   }
 
   async function setPurchaseState(db,session,osId,itemKey,bought){
@@ -548,6 +598,6 @@
     osPieces,safeNF,safeCotacao,reportEvents,
     loadReads,markRead,seenAt,
     queryByTenant,loadReferenceData,listenOS,findOSByPlate,loadOperationalExtras,
-    addEtapa,toggleEtapa,setExecutionState,setPurchaseState
+    addEtapa,toggleEtapa,addRealPart,setExecutionState,setPurchaseState
   };
 })();
