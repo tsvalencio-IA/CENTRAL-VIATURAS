@@ -104,3 +104,12 @@
 - Placa ampliada, contraste aumentado e botão visual simplificado.
 - Link compartilhado recebeu versão de cache para forçar o WhatsApp a buscar a nova prévia.
 - `og:image:alt` adicionado e cache da imagem reduzido para facilitar atualizações.
+
+
+## 1.4.3 — 2026-09-29
+
+- Corrigido o PNG da prévia que aparecia sem os textos dentro da imagem em alguns ambientes.
+- Removido o gerador SVG/Sharp que dependia das fontes instaladas na Function.
+- Novo PNG gerado por `@vercel/og`, com renderização de texto própria para Open Graph.
+- Mantida área segura central para WhatsApp Desktop/Web e WhatsApp mobile.
+- Cache do compartilhamento alterado para `?v=143`.
