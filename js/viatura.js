@@ -444,10 +444,7 @@
   }
 
   function shareUrl(){
-    const url=new URL('v.html',location.href);
-    url.search='?'+encodeURIComponent(currentPlate());
-    url.hash='';
-    return url.toString();
+    return 'https://viaturas.vercel.app/p/'+encodeURIComponent(currentPlate());
   }
 
   function shareMessage(){
