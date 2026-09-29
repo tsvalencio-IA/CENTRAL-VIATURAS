@@ -19,10 +19,13 @@ jobs:
       - name: Validar JavaScript
         run: |
           node --check js/config.js
+          node --check js/theme.js
           node --check js/auth.js
           node --check js/data.js
           node --check js/index.js
           node --check js/viatura.js
+          node --check api/share.js
+          node --check api/og.js
       - name: Verificar arquivos principais
         run: |
           test -f index.html
@@ -30,3 +33,7 @@ jobs:
           test -f css/app.css
           test -f manifest.webmanifest
           test -f service-worker.js
+          test -f vercel.json
+          test -f package.json
+          test -f api/share.js
+          test -f api/og.js
