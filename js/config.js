@@ -1,7 +1,7 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.1.0',
+  version: '1.1.1',
   appName: 'Central de Viaturas',
   footer: 'Powered by thIAguinho Soluções Digitais',
   firebaseConfig: {
