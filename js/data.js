@@ -115,57 +115,132 @@
     return /^(executado|executado_obs|executado_com_observacao|concluido|finalizado|feito|realizado|trocada)$/i.test(String(status||'').trim());
   }
 
+  function realPartIdentity(p,index,source){
+    const strong=String(p?.origemNFItemKey||p?.idReal||p?.pecaRealId||p?.origemAutoKey||'').trim();
+    if(strong) return strong;
+    const codigo=String(p?.codigo||p?.cod||p?.codigoComercial||p?.codigoFornecedor||p?.oem||'').trim();
+    const desc=String(p?.desc||p?.descricao||p?.descricaoExibicao||p?.nomePeca||p?.nome||'').trim();
+    const qtd=String(p?.qtd??p?.q??p?.quantidade??1);
+    return [source||'real',codigo,desc,qtd,index].join('|');
+  }
+
+  function getRealParts(os){
+    const lists=[
+      {source:'pecasReais',items:os?.pecasReais},
+      {source:'pecasRealmenteTrocadas',items:os?.pecasRealmenteTrocadas},
+      {source:'itensReais',items:os?.itensReais}
+    ];
+    const out=[],seen=new Set();
+    lists.forEach(group=>(Array.isArray(group.items)?group.items:[]).forEach((p,index)=>{
+      if(!p||typeof p!=='object') return;
+      const id=realPartIdentity(p,index,group.source);
+      const dedupe=norm(id);
+      if(dedupe&&seen.has(dedupe)) return;
+      if(dedupe) seen.add(dedupe);
+      out.push({...p,_centralRealSource:group.source,_centralRealIndex:index,_centralRealIdentity:id});
+    }));
+    return out;
+  }
+
+  function isTrulyInstalledRealPart(p){
+    if(!p||typeof p!=='object') return false;
+    const source=String(p._centralRealSource||'');
+    if(source==='pecasRealmenteTrocadas'||source==='itensReais') return true;
+
+    const origem=norm(p.origem||'').replace(/\s+/g,'_');
+    const status=norm(p.statusAplicacao||p.statusExecucao||p.status||p.situacao||'').replace(/\s+/g,'_');
+    const texto=norm([p.observacao,p.obs,p.motivo,p.descricaoStatus].filter(Boolean).join(' '));
+
+    // O próprio SAAS-2 grava a entrada de NF em pecasReais com este status e
+    // observação dizendo explicitamente que isso NÃO indica instalação/execução.
+    const somenteComprada =
+      status==='comprada_vinculada_nf' ||
+      (origem==='nf_entrada' && !/(instalad|trocad|aplicad|executad|realizad|utilizad|baixad)/.test(status+' '+texto)) ||
+      /nao indica instalacao|nao executad|aguardando instalacao|somente comprad/.test(texto);
+    if(somenteComprada) return false;
+
+    if(/(instalad|trocad|aplicad|executad|realizad|utilizad|baixad)/.test(status+' '+texto)) return true;
+    if(p.origemAutoOS===true||origem==='os_estoque') return true;
+
+    // Registro manual da área *177 é, por definição no SAAS-2, "Peças realmente instaladas".
+    return source==='pecasReais';
+  }
+
+  function trueRealParts(os){
+    return getRealParts(os).filter(isTrulyInstalledRealPart);
+  }
+
   function operationalItems(os){
     const keys=approvedKeys(os);
     const approvalExists=hasApproval(os);
     const exec=os?.execucaoItens||{};
     const buys=os?.centralComprasItens||{};
+
+    // SERVIÇOS: vêm da própria O.S., como solicitado.
     const services=(Array.isArray(os?.servicos)?os.servicos:[]).map((s,index)=>{
       const key=`servico-${index}`;
       return {
-        key,index,tipo:'servico',labelTipo:'SERVIÇO',
+        key,index,tipo:'servico',labelTipo:'SERVIÇO DA O.S.',
         descricao:String(s?.desc||s?.descricao||s?.servico||s?.nome||'Serviço').trim(),
         codigo:String(s?.codigoInterno||s?.codInterno||s?.codigoServicoInterno||s?.codigoTabela||s?.codigo||'').trim(),
         qtd:1,
         aprovado:!approvalExists||keys.has(key),
         approvalExists,
         execucao:exec[key]||{},
-        compra:null
+        compra:null,
+        real:false
       };
     });
-    const pieces=(Array.isArray(os?.pecas)?os.pecas:[]).map((p,index)=>{
-      const key=`peca-${index}`;
+
+    // PEÇAS: NUNCA usa os.pecas. Só usa as peças verdadeiramente instaladas
+    // da área restrita *177 (pecasReais / pecasRealmenteTrocadas / itensReais),
+    // excluindo vínculo de NF que o próprio SaaS marca como "não indica instalação".
+    const pieces=trueRealParts(os).map((p,index)=>{
+      const identity=String(p._centralRealIdentity||realPartIdentity(p,index,p._centralRealSource));
+      const key=`real-${identity}`;
       const origem=norm(p?.origem||'');
-      const nfBought=p?.origemNFVinculada===true||origem==='nf_entrada_os'||origem==='nf_entrada'||norm(p?.statusAplicacao)==='comprada_vinculada_nf'||!!String(p?.origemNFItemKey||'').trim();
+      const hasNF=!!String(p?.nfId||p?.nf||p?.nfNumero||p?.numeroNF||'').trim();
       return {
-        key,index,tipo:'peca',labelTipo:'PEÇA',
-        descricao:String(p?.desc||p?.descricao||p?.descLivre||p?.descricaoPeca||p?.nomePeca||p?.nome||p?.item||'Peça').trim(),
-        codigo:String(p?.codigo||p?.cod||p?.codigoFornecedor||p?.oem||'').trim(),
-        qtd:p?.qtd??p?.quantidade??p?.qtde??p?.q??1,
-        aprovado:!approvalExists||keys.has(key),
-        approvalExists,
-        execucao:exec[key]||{},
+        key,index,tipo:'peca',labelTipo:'PEÇA REAL TROCADA',
+        descricao:String(p?.desc||p?.descricao||p?.descricaoExibicao||p?.nomePeca||p?.nome||p?.item||'Peça').trim(),
+        codigo:String(p?.codigo||p?.cod||p?.codigoComercial||p?.codigoFornecedor||p?.oem||'').trim(),
+        qtd:p?.qtd??p?.q??p?.quantidadeOperacionalTotal??p?.quantidade??1,
+        aprovado:true,
+        approvalExists:false,
+        execucao:{
+          status:'trocada',
+          atualizadoPor:p?.registradoPor||p?.atualizadoPor||p?.mecNome||'',
+          atualizadoEm:p?.registradoEm||p?.atualizadoEm||p?.dataInstalacao||p?.dataTroca||''
+        },
         compra:buys[key]||{},
-        compraFiscal:nfBought
+        compraFiscal:hasNF,
+        fornecedor:String(p?.fornecedor||p?.fornecedorNome||'').trim(),
+        nfNumero:String(p?.nfNumero||p?.nf||'').trim(),
+        real:true,
+        realSource:p?._centralRealSource||'pecasReais',
+        origem
       };
     });
+
     return services.concat(pieces).filter(x=>x.descricao||x.codigo);
   }
 
   function safePiece(p){
     if(!p||typeof p!=='object') return null;
     const descricao=String(p.desc||p.descricao||p.item||p.nome||p.peca||p.peça||'').trim();
-    const codigo=String(p.codigo||p.cod||p.codigoFornecedor||p.oem||'').trim();
-    const qtd=p.qtd??p.quantidade??p.qtde??1;
+    const codigo=String(p.codigo||p.cod||p.codigoComercial||p.codigoFornecedor||p.oem||'').trim();
+    const qtd=p.qtd??p.q??p.quantidadeOperacionalTotal??p.quantidade??p.qtde??1;
     const status=String(p.status||p.etapa||p.situacao||p.situação||p.statusAplicacao||'').trim();
     const fornecedor=String(p.fornecedorNome||p.fornecedor||'').trim();
+    const nfNumero=String(p.nfNumero||p.nf||'').trim();
     if(!descricao&&!codigo) return null;
-    return {descricao,codigo,qtd,status,fornecedor};
+    return {descricao,codigo,qtd,status,fornecedor,nfNumero};
   }
+
   function osPieces(os){
-    const raw=Array.isArray(os?.pecasReais)?os.pecasReais:(Array.isArray(os?.pecas)?os.pecas:[]);
-    return raw.map(safePiece).filter(Boolean);
+    return trueRealParts(os).map(safePiece).filter(Boolean);
   }
+
   function safeNF(doc){
     if(!doc) return null;
     const descricao=String(doc.desc||doc.descricao||doc.item||'').trim();
@@ -469,7 +544,7 @@
     role,isManager,canExecute,canPurchase,
     getOSPlate,getOSNumber,getVehicleLabel,getClientLabel,activityTs,activityIso,
     normalizeEtapas,checklistSummary,isActive,
-    approvedKeys,hasApproval,executionFinished,operationalItems,
+    approvedKeys,hasApproval,executionFinished,getRealParts,isTrulyInstalledRealPart,trueRealParts,operationalItems,
     osPieces,safeNF,safeCotacao,reportEvents,
     loadReads,markRead,seenAt,
     queryByTenant,loadReferenceData,listenOS,findOSByPlate,loadOperationalExtras,
