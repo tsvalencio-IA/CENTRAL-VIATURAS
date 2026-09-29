@@ -125,3 +125,11 @@
 - Manifesto ganhou ícones normal e maskable, categorias, ID, orientação e atalhos.
 - Adicionado favicon e Apple Touch Icon.
 - Service worker deixou de tentar armazenar Firebase/CDNs/serviços externos no cache.
+
+
+## 1.4.5 — 2026-09-29
+
+- Checklist passa a usar `checklistResumo.itens[].acao` como fonte de verdade antes de qualquer resumo derivado.
+- Corrigido cenário em que um item com ação real `revisar` podia herdar label antigo `Trocar`.
+- Classificação passa a ser sempre: `trocar` → peça; retificar/regular/ajustar/lubrificar/limpar → serviço; atenção/revisar → atenção.
+- `checklistOperacional` e `checklistUltimo` ficam apenas como fallback quando o payload completo não existe.
