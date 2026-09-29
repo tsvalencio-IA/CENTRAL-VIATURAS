@@ -1,7 +1,7 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.0.1',
+  version: '1.1.0',
   appName: 'Central de Viaturas',
   footer: 'Powered by thIAguinho Soluções Digitais',
   firebaseConfig: {
@@ -24,6 +24,9 @@ window.CENTRAL_CONFIG = {
   activeStatuses: [
     'Triagem','Orcamento','Orcamento_Enviado','Aprovado','Andamento','Pronto',
     'Serviço Aprovado','Em Serviço','Veículo Pronto'
+  ],
+  managerRoles: [
+    'gerente','gestor','admin','administrador','superadmin','dono','proprietario','proprietário','owner','master'
   ],
   rolesPermitidos: [
     'mecanico','mecânico','tecnico','técnico','gerente','gestor','dono',
