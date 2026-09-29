@@ -6,15 +6,22 @@
   <meta name="theme-color" content="#0b1118">
   <title>Central de Viaturas</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/app.css?v=1.4.3">
-  <script src="js/theme.js?v=1.4.3"></script>
+  <link rel="icon" type="image/png" sizes="64x64" href="https://viaturas.vercel.app/api/app-icon?size=64&v=144">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://viaturas.vercel.app/api/app-icon?size=180&v=144">
+  <meta name="application-name" content="Central de Viaturas">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Viaturas">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/app.css?v=1.4.4">
+  <script src="js/theme.js?v=1.4.4"></script>
+  <script defer src="js/install.js?v=1.4.4"></script>
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden">
   <form id="loginForm" class="login-card">
     <div style="display:flex;align-items:center;gap:10px">
       <div class="brand" style="flex:1"><div class="brand-mark">CV</div><div class="brand-text"><b>Central de Viaturas</b><span>Integração operacional da oficina</span></div></div>
-      <button type="button" class="btn compact" data-theme-toggle>TEMA</button>
+      <div class="login-quick-actions"><button type="button" class="btn compact install-btn" data-install-app hidden>INSTALAR APP</button><button type="button" class="btn compact" data-theme-toggle>TEMA</button></div>
     </div>
     <h1>Acesso interno</h1>
     <p>Use o mesmo usuário/e-mail e senha dos sistemas da oficina.</p>
@@ -33,6 +40,7 @@
       <div class="brand"><div class="brand-mark">CV</div><div class="brand-text"><b>Central de Viaturas</b><span id="officeLabel">Oficina</span></div></div>
       <div class="top-actions">
         <button type="button" class="btn" data-back="https://tsvalencio-ia.github.io/SAAS-2/">VOLTAR</button>
+        <button type="button" class="btn install-btn" data-install-app hidden>INSTALAR APP</button>
         <button type="button" class="btn" data-theme-toggle>TEMA</button>
         <button id="logout" class="btn" title="Sair">SAIR</button>
       </div>
@@ -58,10 +66,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=1.4.3"></script>
-<script src="js/auth.js?v=1.4.3"></script>
-<script src="js/data.js?v=1.4.3"></script>
-<script src="js/index.js?v=1.4.3"></script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.3').catch(()=>{});</script>
+<script src="js/config.js?v=1.4.4"></script>
+<script src="js/auth.js?v=1.4.4"></script>
+<script src="js/data.js?v=1.4.4"></script>
+<script src="js/index.js?v=1.4.4"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.4').catch(()=>{});</script>
 </body>
 </html>
