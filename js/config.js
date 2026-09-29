@@ -1,12 +1,9 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.2.0',
+  version: '1.2.1',
   appName: 'Central de Viaturas',
   footer: 'Powered by thIAguinho Soluções Digitais',
-  // Preenchido após a primeira importação do repositório na Vercel.
-  // Quando o app roda na Vercel, a própria origem é usada automaticamente.
-  sharePreviewBase: '',
   firebaseConfig: {
     apiKey: 'AIzaSyBqIuCsHHuy_f-mBWV4JBkbyOorXpqQvqg',
     authDomain: 'hub-thiaguinho.firebaseapp.com',
