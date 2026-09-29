@@ -1,0 +1,21 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/p/:placa", "destination": "/api/share?placa=:placa" },
+    { "source": "/preview/:placa", "destination": "/api/og?placa=:placa" }
+  ],
+  "headers": [
+    {
+      "source": "/api/share",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=86400" }
+      ]
+    },
+    {
+      "source": "/api/og",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=86400, stale-while-revalidate=604800" }
+      ]
+    }
+  ]
+}
