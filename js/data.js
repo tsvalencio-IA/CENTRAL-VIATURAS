@@ -96,8 +96,14 @@
     };
   }
 
+  const CHECKLIST_ACTION_LABELS={
+    ok:'OK',atencao:'Atenção',trocar:'Trocar',retificar:'Retificar',
+    regular:'Regular',ajustar:'Ajustar',lubrificar:'Lubrificar',
+    limpar:'Limpar',revisar:'Revisar',na:'Não se aplica'
+  };
   function normalizeChecklistPlanRow(raw,index,checklistId,group){
     const id=String(raw?.id||raw?.itemId||('item_'+index));
+    const acao=norm(raw?.acao||'').replace(/\s+/g,'_');
     return {
       id,
       key:String(raw?.key||('checklist:'+(checklistId||'atual')+':'+id)),
@@ -105,8 +111,9 @@
       group,
       secao:String(raw?.secao||'').trim(),
       item:String(raw?.item||raw?.titulo||raw?.descricao||'Item').trim(),
-      acao:String(raw?.acao||'').trim(),
-      acaoLabel:String(raw?.acaoLabel||raw?.acao||'').trim(),
+      acao,
+      // A ação do checklist manda; label antigo nunca pode transformar Revisar em Trocar.
+      acaoLabel:String(CHECKLIST_ACTION_LABELS[acao]||acao||raw?.acaoLabel||'').trim(),
       obs:String(raw?.obs||raw?.diagnosticoObs||'').trim(),
       fotoUrls:Array.isArray(raw?.fotoUrls)?raw.fotoUrls:(Array.isArray(raw?.fotosUrls)?raw.fotosUrls:[]),
       criticidade:String(raw?.criticidade||'').trim()
@@ -117,18 +124,52 @@
     const op=os?.checklistOperacional;
     const full=os?.checklistResumo||{};
     const last=os?.checklistUltimo||{};
-    const checklistId=String(op?.checklistId||last?.id||full?.id||os?.checklistId||'');
-    if(op && (Array.isArray(op.pecasTrocar)||Array.isArray(op.servicosExecutar)||Array.isArray(op.atencoes))){
+    const checklistId=String(full?.id||last?.id||op?.checklistId||os?.checklistId||'');
+
+    // Fonte de verdade: itens completos do CHECKLIS_SOS. O operacional é apenas derivado/fallback.
+    const fullItems=Array.isArray(full?.itens)?full.itens:[];
+    if(fullItems.length){
+      const rows=fullItems.map((x,i)=>{
+        const ac=norm(x?.acao||'').replace(/\s+/g,'_');
+        let group='';
+        if(ac==='trocar') group='peca';
+        else if(['retificar','regular','ajustar','lubrificar','limpar'].includes(ac)) group='servico';
+        else if(['atencao','revisar'].includes(ac)) group='atencao';
+        if(!group) return null;
+        return normalizeChecklistPlanRow(x,i,checklistId,group);
+      }).filter(Boolean);
       return {
         checklistId,
-        atualizadoEm:op.atualizadoEm||os?.checklistOperacionalAtualizadoEm||last?.atualizadoEm||full?.atualizadoEm||'',
-        pecasTrocar:(op.pecasTrocar||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'peca')),
-        servicosExecutar:(op.servicosExecutar||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'servico')),
-        atencoes:(op.atencoes||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'atencao'))
+        atualizadoEm:full?.atualizadoEm||os?.checklistAtualizadoEm||last?.atualizadoEm||'',
+        pecasTrocar:rows.filter(x=>x.group==='peca'),
+        servicosExecutar:rows.filter(x=>x.group==='servico'),
+        atencoes:rows.filter(x=>x.group==='atencao')
       };
     }
 
-    const itens=Array.isArray(full?.itens)?full.itens:(Array.isArray(last?.criticos)?last.criticos:[]);
+    if(op && (Array.isArray(op.pecasTrocar)||Array.isArray(op.servicosExecutar)||Array.isArray(op.atencoes))){
+      const all=[
+        ...(op.pecasTrocar||[]),
+        ...(op.servicosExecutar||[]),
+        ...(op.atencoes||[])
+      ].map((x,i)=>{
+        const ac=norm(x?.acao||'').replace(/\s+/g,'_');
+        let group='';
+        if(ac==='trocar') group='peca';
+        else if(['retificar','regular','ajustar','lubrificar','limpar'].includes(ac)) group='servico';
+        else if(['atencao','revisar'].includes(ac)) group='atencao';
+        return group?normalizeChecklistPlanRow(x,i,checklistId,group):null;
+      }).filter(Boolean);
+      return {
+        checklistId,
+        atualizadoEm:op.atualizadoEm||os?.checklistOperacionalAtualizadoEm||last?.atualizadoEm||'',
+        pecasTrocar:all.filter(x=>x.group==='peca'),
+        servicosExecutar:all.filter(x=>x.group==='servico'),
+        atencoes:all.filter(x=>x.group==='atencao')
+      };
+    }
+
+    const itens=Array.isArray(last?.criticos)?last.criticos:[];
     const rows=itens.map((x,i)=>{
       const ac=norm(x?.acao||'').replace(/\s+/g,'_');
       let group='';
@@ -140,7 +181,7 @@
     }).filter(Boolean);
     return {
       checklistId,
-      atualizadoEm:last?.atualizadoEm||full?.atualizadoEm||os?.checklistAtualizadoEm||'',
+      atualizadoEm:last?.atualizadoEm||os?.checklistAtualizadoEm||'',
       pecasTrocar:rows.filter(x=>x.group==='peca'),
       servicosExecutar:rows.filter(x=>x.group==='servico'),
       atencoes:rows.filter(x=>x.group==='atencao')
