@@ -51,6 +51,9 @@
     ];
     Object.values(os?.execucaoItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt));
     Object.values(os?.centralComprasItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt||x?.compradoEm));
+    Object.values(os?.centralChecklistExecucaoItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt));
+    Object.values(os?.centralChecklistComprasItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt||x?.compradoEm));
+    vals.push(os?.checklistOperacionalAtualizadoEm);
     return Math.max(0,...vals.map(ts));
   }
   function activityIso(os){ const n=activityTs(os); return n?new Date(n).toISOString():''; }
@@ -92,6 +95,66 @@
       criticos:crit
     };
   }
+
+  function normalizeChecklistPlanRow(raw,index,checklistId,group){
+    const id=String(raw?.id||raw?.itemId||('item_'+index));
+    return {
+      id,
+      key:String(raw?.key||('checklist:'+(checklistId||'atual')+':'+id)),
+      checklistId:String(raw?.checklistId||checklistId||''),
+      group,
+      secao:String(raw?.secao||'').trim(),
+      item:String(raw?.item||raw?.titulo||raw?.descricao||'Item').trim(),
+      acao:String(raw?.acao||'').trim(),
+      acaoLabel:String(raw?.acaoLabel||raw?.acao||'').trim(),
+      obs:String(raw?.obs||raw?.diagnosticoObs||'').trim(),
+      fotoUrls:Array.isArray(raw?.fotoUrls)?raw.fotoUrls:(Array.isArray(raw?.fotosUrls)?raw.fotosUrls:[]),
+      criticidade:String(raw?.criticidade||'').trim()
+    };
+  }
+
+  function checklistPlan(os){
+    const op=os?.checklistOperacional;
+    const full=os?.checklistResumo||{};
+    const last=os?.checklistUltimo||{};
+    const checklistId=String(op?.checklistId||last?.id||full?.id||os?.checklistId||'');
+    if(op && (Array.isArray(op.pecasTrocar)||Array.isArray(op.servicosExecutar)||Array.isArray(op.atencoes))){
+      return {
+        checklistId,
+        atualizadoEm:op.atualizadoEm||os?.checklistOperacionalAtualizadoEm||last?.atualizadoEm||full?.atualizadoEm||'',
+        pecasTrocar:(op.pecasTrocar||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'peca')),
+        servicosExecutar:(op.servicosExecutar||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'servico')),
+        atencoes:(op.atencoes||[]).map((x,i)=>normalizeChecklistPlanRow(x,i,checklistId,'atencao'))
+      };
+    }
+
+    const itens=Array.isArray(full?.itens)?full.itens:(Array.isArray(last?.criticos)?last.criticos:[]);
+    const rows=itens.map((x,i)=>{
+      const ac=norm(x?.acao||'').replace(/\s+/g,'_');
+      let group='';
+      if(ac==='trocar') group='peca';
+      else if(['retificar','regular','ajustar','lubrificar','limpar'].includes(ac)) group='servico';
+      else if(['atencao','revisar'].includes(ac)) group='atencao';
+      if(!group) return null;
+      return normalizeChecklistPlanRow(x,i,checklistId,group);
+    }).filter(Boolean);
+    return {
+      checklistId,
+      atualizadoEm:last?.atualizadoEm||full?.atualizadoEm||os?.checklistAtualizadoEm||'',
+      pecasTrocar:rows.filter(x=>x.group==='peca'),
+      servicosExecutar:rows.filter(x=>x.group==='servico'),
+      atencoes:rows.filter(x=>x.group==='atencao')
+    };
+  }
+
+  function checklistExecution(os,key){
+    return (os?.centralChecklistExecucaoItens||{})[String(key)]||{};
+  }
+
+  function checklistPurchase(os,key){
+    return (os?.centralChecklistComprasItens||{})[String(key)]||{};
+  }
+
 
   function isActive(os){
     const s=norm(os?.status||os?.etapa||'');
@@ -542,6 +605,171 @@
     return created;
   }
 
+  async function setChecklistExecutionState(db,session,osId,itemKey,done){
+    if(!canExecute(session)) throw new Error('Seu perfil não pode alterar a execução.');
+    const ref=db.collection(CFG.collections.os).doc(osId);
+    const auditRef=db.collection('lixeira_auditoria').doc();
+    const agora=new Date().toISOString();
+    let result=null;
+
+    await db.runTransaction(async tx=>{
+      const snap=await tx.get(ref);
+      if(!snap.exists) throw new Error('O.S. não encontrada.');
+      const atual=snap.data()||{};
+      const plan=checklistPlan(atual);
+      const all=[...plan.pecasTrocar,...plan.servicosExecutar,...plan.atencoes];
+      const item=all.find(x=>String(x.key)===String(itemKey));
+      if(!item) throw new Error('Item do checklist não encontrado nesta O.S.');
+
+      const map={...(atual.centralChecklistExecucaoItens||{})};
+      const anterior=map[item.key]||{};
+      const status=done?(item.group==='peca'?'trocada':item.group==='atencao'?'resolvido':'executado'):'pendente';
+      map[item.key]={
+        ...anterior,key:item.key,checklistId:item.checklistId,itemId:item.id,
+        grupo:item.group,descricao:item.item,secao:item.secao,acao:item.acao,
+        status,
+        atualizadoEm:agora,
+        atualizadoPor:session.name||'Equipe',
+        atualizadoPorId:session.funcionarioId||session.email||'',
+        atualizadoPorTipo:session.role||session.cargo||'equipe',
+        origem:'CENTRAL-VIATURAS'
+      };
+
+      let pecasReais=Array.isArray(atual.pecasReais)?atual.pecasReais.slice():[];
+      if(item.group==='peca'){
+        if(done){
+          const exists=pecasReais.some(p=>String(p?.checklistItemKey||'')===String(item.key));
+          if(!exists){
+            pecasReais.push({
+              idReal:eventId(),
+              origem:'checklist_sos',
+              origemChecklist:true,
+              checklistId:item.checklistId,
+              checklistItemId:item.id,
+              checklistItemKey:item.key,
+              statusAplicacao:'instalada',
+              desc:item.item,
+              descricao:item.item,
+              qtd:1,
+              registradoEm:agora,
+              registradoPor:session.name||'Equipe',
+              registradoPorId:session.funcionarioId||session.email||'',
+              registradoPorPerfil:session.role||session.cargo||'equipe',
+              observacao:item.obs?('Checklist: '+item.obs):'Peça marcada como realmente trocada a partir do Checklist SOS.'
+            });
+          }
+        }else{
+          pecasReais=pecasReais.filter(p=>!(
+            String(p?.origem||'')==='checklist_sos' &&
+            String(p?.checklistItemKey||'')===String(item.key)
+          ));
+        }
+      }
+
+      const verb=item.group==='peca'?(done?'peça marcada como realmente trocada':'troca reaberta'):
+        item.group==='atencao'?(done?'atenção marcada como resolvida':'atenção reaberta'):
+        (done?'serviço do checklist executado':'serviço do checklist reaberto');
+
+      const ev=makeEvent(session,'checklist_execucao',done?'concluiu_item_checklist':'reabriu_item_checklist',{
+        itemKey:item.key,checklistId:item.checklistId,grupo:item.group,descricao:item.item,secao:item.secao,status
+      });
+
+      tx.update(ref,{
+        centralChecklistExecucaoItens:map,
+        ...(item.group==='peca'?{pecasReais}:{}),
+        centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
+        timeline:pushTimeline(atual.timeline,session.name,'Central: '+verb+' — '+item.item,agora),
+        centralViaturasAtualizadoEm:agora,
+        centralViaturasAtualizadoPor:session.name||'Usuário',
+        updatedAt:agora
+      });
+
+      tx.set(auditRef,{
+        tenantId:session.tenantId||'',
+        modulo:'CENTRAL / CHECKLIST',
+        acao:verb+': '+item.item,
+        usuario:session.name||'Equipe',
+        usuarioId:session.funcionarioId||session.email||'',
+        perfil:session.role||session.cargo||'equipe',
+        entidade:'ordens_servico',
+        entidadeId:osId,
+        checklistId:item.checklistId||'',
+        itemKey:item.key,
+        placa:getOSPlate(atual),
+        ts:agora,
+        createdAt:agora
+      });
+      result={item,status,done};
+    });
+    return result;
+  }
+
+  async function setChecklistPurchaseState(db,session,osId,itemKey,bought){
+    if(!canPurchase(session)) throw new Error('Somente gestor, gerente ou administrador pode marcar compra.');
+    const ref=db.collection(CFG.collections.os).doc(osId);
+    const auditRef=db.collection('lixeira_auditoria').doc();
+    const agora=new Date().toISOString();
+    let result=null;
+
+    await db.runTransaction(async tx=>{
+      const snap=await tx.get(ref);
+      if(!snap.exists) throw new Error('O.S. não encontrada.');
+      const atual=snap.data()||{};
+      const item=checklistPlan(atual).pecasTrocar.find(x=>String(x.key)===String(itemKey));
+      if(!item) throw new Error('Peça do checklist não encontrada nesta O.S.');
+
+      const map={...(atual.centralChecklistComprasItens||{})};
+      const anterior=map[item.key]||{};
+      map[item.key]={
+        ...anterior,
+        key:item.key,checklistId:item.checklistId,itemId:item.id,
+        descricao:item.item,secao:item.secao,
+        comprado:!!bought,
+        status:bought?'comprado':'pendente',
+        compradoEm:bought?agora:'',
+        compradoPor:bought?(session.name||'Gestão'):'',
+        atualizadoEm:agora,
+        atualizadoPor:session.name||'Gestão',
+        atualizadoPorId:session.funcionarioId||session.email||'',
+        atualizadoPorTipo:session.role||session.cargo||'gestao',
+        origem:'CENTRAL-VIATURAS'
+      };
+
+      const verb=bought?'peça do checklist marcada como comprada':'compra da peça do checklist reaberta';
+      const ev=makeEvent(session,'checklist_compra',bought?'marcou_peca_checklist_comprada':'reabriu_compra_peca_checklist',{
+        itemKey:item.key,checklistId:item.checklistId,descricao:item.item,secao:item.secao,status:bought?'comprado':'pendente'
+      });
+
+      tx.update(ref,{
+        centralChecklistComprasItens:map,
+        centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
+        timeline:pushTimeline(atual.timeline,session.name,'Central: '+verb+' — '+item.item,agora),
+        centralViaturasAtualizadoEm:agora,
+        centralViaturasAtualizadoPor:session.name||'Usuário',
+        updatedAt:agora
+      });
+
+      tx.set(auditRef,{
+        tenantId:session.tenantId||'',
+        modulo:'CENTRAL / CHECKLIST',
+        acao:verb+': '+item.item,
+        usuario:session.name||'Gestão',
+        usuarioId:session.funcionarioId||session.email||'',
+        perfil:session.role||session.cargo||'gestao',
+        entidade:'ordens_servico',
+        entidadeId:osId,
+        checklistId:item.checklistId||'',
+        itemKey:item.key,
+        placa:getOSPlate(atual),
+        ts:agora,
+        createdAt:agora
+      });
+      result={item,bought};
+    });
+    return result;
+  }
+
+
   async function setPurchaseState(db,session,osId,itemKey,bought){
     if(!canPurchase(session)) throw new Error('Somente gestor, gerente ou administrador pode marcar compra.');
     const ref=db.collection(CFG.collections.os).doc(osId);
@@ -593,11 +821,11 @@
     norm,plate,iso,ts,fmt,escapeHtml,
     role,isManager,canExecute,canPurchase,
     getOSPlate,getOSNumber,getVehicleLabel,getClientLabel,activityTs,activityIso,
-    normalizeEtapas,checklistSummary,isActive,
+    normalizeEtapas,checklistSummary,checklistPlan,checklistExecution,checklistPurchase,isActive,
     approvedKeys,hasApproval,executionFinished,getRealParts,isTrulyInstalledRealPart,trueRealParts,operationalItems,
     osPieces,safeNF,safeCotacao,reportEvents,
     loadReads,markRead,seenAt,
     queryByTenant,loadReferenceData,listenOS,findOSByPlate,loadOperationalExtras,
-    addEtapa,toggleEtapa,addRealPart,setExecutionState,setPurchaseState
+    addEtapa,toggleEtapa,addRealPart,setExecutionState,setChecklistExecutionState,setChecklistPurchaseState,setPurchaseState
   };
 })();
