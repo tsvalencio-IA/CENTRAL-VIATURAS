@@ -123,7 +123,7 @@
         ? '<span class="state-chip ok">TROCADA REAL</span>'
         : (done?'<span class="state-chip ok">EXECUTADO</span>':'<span class="state-chip">PENDENTE</span>');
       const buyChip=item.tipo==='peca'?(bought?`<span class="state-chip bought">COMPRADA${boughtSource?' • '+D.escapeHtml(boughtSource):''}</span>`:'<span class="state-chip">COMPRA NÃO INFORMADA</span>'):'';
-      const buyButton=item.tipo==='peca'&&gestor
+      const buyButton=item.tipo==='peca'&&gestor&&!item.compraFiscal
         ? `<button class="btn ${bought?'':'purchase'}" data-buy-key="${D.escapeHtml(item.key)}" data-bought="${bought?'1':'0'}">${bought?'DESMARCAR COMPRA':'MARCAR COMPRADA'}</button>`
         : '';
       const execButton=item.real
