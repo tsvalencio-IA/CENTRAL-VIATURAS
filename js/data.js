@@ -23,7 +23,7 @@
   }
   function getClientLabel(os,client){ return String(client?.nome||client?.razaoSocial||client?.fantasia||os?.clienteNome||os?.cliente||'').trim(); }
   function activityTs(os){
-    const vals=[os?.updatedAt,os?.atualizadoEm,os?.etapasInternasAtualizadoEm,os?.checklistAtualizadoEm,os?.checklistEntregaAtualizadoEm,os?.checklistUltimo?.atualizadoEm,os?.checklistResumo?.atualizadoEm,os?.createdAt,os?.data];
+    const vals=[os?.updatedAt,os?.atualizadoEm,os?.etapasInternasAtualizadoEm,os?.checklistAtualizadoEm,os?.checklistEntregaAtualizadoEm,os?.checklistUltimo?.atualizadoEm,os?.checklistResumo?.atualizadoEm,os?.centralViaturasAtualizadoEm,os?.createdAt,os?.data];
     return Math.max(0,...vals.map(ts));
   }
   function activityIso(os){ const n=activityTs(os); return n?new Date(n).toISOString():''; }
@@ -144,14 +144,9 @@
       const etapas=normalizeEtapas(snap.data()?.etapasInternas);
       nova={id:`cv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`,texto,realizado:false,criadoEm:agora,criadoPor:session.name||'Usuário',realizadoEm:'',realizadoPor:'',interno:true,visivelCliente:false,origem:'CENTRAL-VIATURAS'};
       etapas.push(nova);
-      tx.update(ref,{etapasInternas:etapas,etapasInternasAtualizadoEm:agora,etapasInternasAtualizadoPor:session.name||'Usuário',updatedAt:agora});
+      tx.update(ref,{etapasInternas:etapas,etapasInternasAtualizadoEm:agora,etapasInternasAtualizadoPor:session.name||'Usuário',centralViaturasAtualizadoEm:agora,centralViaturasAtualizadoPor:session.name||'Usuário',updatedAt:agora});
     });
-    try{
-      if(firebase.auth().currentUser){
-        await db.collection(CFG.collections.notificacoes).add({tenantId:session.tenantId,osId,placa:'',tipo:'central_viatura_atualizada',titulo:'Nova atualização de viatura',mensagem:texto,criadoPor:session.name||'',createdAt:agora,lida:false});
-      }
-    }catch(e){ console.warn('[Central notificação]',e.message); }
-    return nova;
+return nova;
   }
   async function toggleEtapa(db,session,osId,etapaId){
     const ref=db.collection(CFG.collections.os).doc(osId); const agora=new Date().toISOString();
@@ -163,7 +158,7 @@
         done=!item.realizado;
         return {...item,realizado:done,realizadoEm:done?agora:'',realizadoPor:done?(session.name||'Usuário'):'',interno:true,visivelCliente:false};
       });
-      tx.update(ref,{etapasInternas:etapas,etapasInternasAtualizadoEm:agora,etapasInternasAtualizadoPor:session.name||'Usuário',updatedAt:agora});
+      tx.update(ref,{etapasInternas:etapas,etapasInternasAtualizadoEm:agora,etapasInternasAtualizadoPor:session.name||'Usuário',centralViaturasAtualizadoEm:agora,centralViaturasAtualizadoPor:session.name||'Usuário',updatedAt:agora});
     });
     return done;
   }
