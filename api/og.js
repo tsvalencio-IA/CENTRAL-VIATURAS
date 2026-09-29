@@ -13,26 +13,48 @@ module.exports = async function handler(req, res) {
   const p = xml(plate);
   const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#08111b"/><stop offset="100%" stop-color="#13283b"/></linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1699ef"/><stop offset="100%" stop-color="#37d67a"/></linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity=".35"/></filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06111b"/>
+      <stop offset="100%" stop-color="#10283b"/>
+    </linearGradient>
+    <linearGradient id="plateStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#20a7ff"/>
+      <stop offset="100%" stop-color="#39d98a"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity=".38"/>
+    </filter>
   </defs>
+
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <circle cx="1080" cy="70" r="220" fill="#2ca7ff" opacity=".06"/>
-  <circle cx="90" cy="590" r="240" fill="#37d67a" opacity=".05"/>
-  <text x="80" y="90" fill="#8ea0b5" font-size="30" font-family="Arial,Helvetica,sans-serif" font-weight="700">CENTRAL DE VIATURAS</text>
-  <rect x="80" y="130" width="1040" height="330" rx="42" fill="#0f1b28" stroke="#2b4257" stroke-width="3" filter="url(#shadow)"/>
-  <text x="600" y="225" text-anchor="middle" fill="#8ea0b5" font-size="30" font-family="Arial,Helvetica,sans-serif" font-weight="700">VIATURA</text>
-  <rect x="250" y="260" width="700" height="130" rx="22" fill="#f8fafc" stroke="url(#accent)" stroke-width="6"/>
-  <text x="600" y="347" text-anchor="middle" fill="#0a1622" font-size="78" font-family="Arial,Helvetica,sans-serif" font-weight="900" letter-spacing="6">${p}</text>
-  <rect x="370" y="500" width="460" height="72" rx="20" fill="#2ca7ff"/>
-  <text x="600" y="547" text-anchor="middle" fill="#06131d" font-size="27" font-family="Arial,Helvetica,sans-serif" font-weight="900">ABRIR VIATURA</text>
-  <text x="80" y="594" fill="#72869a" font-size="18" font-family="Arial,Helvetica,sans-serif">Powered by thIAguinho Soluções Digitais</text>
-  </svg>`;
+  <circle cx="1040" cy="30" r="250" fill="#20a7ff" opacity=".055"/>
+  <circle cx="150" cy="650" r="280" fill="#39d98a" opacity=".04"/>
+
+  <!-- Faixa externa: útil quando o WhatsApp mostra a imagem inteira no mobile -->
+  <text x="70" y="82" fill="#9db0c3" font-size="27" font-family="Arial,Helvetica,sans-serif" font-weight="700">CENTRAL DE VIATURAS</text>
+  <text x="1130" y="82" text-anchor="end" fill="#6f8598" font-size="20" font-family="Arial,Helvetica,sans-serif" font-weight="700">ACOMPANHAMENTO</text>
+
+  <!-- Área segura central: tudo importante cabe no recorte quadrado do WhatsApp Desktop -->
+  <g transform="translate(300 72)">
+    <rect x="0" y="0" width="600" height="486" rx="44" fill="#0d1b28" stroke="#263f54" stroke-width="3" filter="url(#shadow)"/>
+    <rect x="42" y="38" width="516" height="58" rx="18" fill="#132838"/>
+    <text x="300" y="77" text-anchor="middle" fill="#dce8f3" font-size="24" font-family="Arial,Helvetica,sans-serif" font-weight="800">VIATURA</text>
+
+    <rect x="48" y="128" width="504" height="190" rx="28" fill="#f7fbff" stroke="url(#plateStroke)" stroke-width="7"/>
+    <rect x="48" y="128" width="504" height="34" rx="22" fill="#e9f5ff"/>
+    <text x="300" y="152" text-anchor="middle" fill="#2d6fa3" font-size="15" font-family="Arial,Helvetica,sans-serif" font-weight="900" letter-spacing="2">BRASIL • CENTRAL</text>
+    <text x="300" y="264" text-anchor="middle" fill="#07131e" font-size="86" font-family="Arial,Helvetica,sans-serif" font-weight="900" letter-spacing="5">${p}</text>
+
+    <rect x="84" y="354" width="432" height="72" rx="22" fill="#20a7ff"/>
+    <text x="300" y="401" text-anchor="middle" fill="#04111b" font-size="28" font-family="Arial,Helvetica,sans-serif" font-weight="900">ABRIR VIATURA</text>
+  </g>
+
+  <text x="70" y="600" fill="#72879a" font-size="17" font-family="Arial,Helvetica,sans-serif">Powered by thIAguinho Soluções Digitais</text>
+  </svg>`
   try {
     const png = await sharp(Buffer.from(svg)).png().toBuffer();
     res.setHeader('Content-Type','image/png');
-    res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
+    res.setHeader('Cache-Control','public, s-maxage=3600, stale-while-revalidate=86400');
     res.status(200).send(png);
   } catch (e) {
     console.error(e);
