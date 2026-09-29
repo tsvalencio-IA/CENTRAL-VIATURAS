@@ -95,3 +95,12 @@
 - A mensagem continua mínima: `ATUALIZAÇÃO PLACA "PLACA" LINK`.
 - A rota dinâmica entrega Open Graph com título da placa e PNG 1200×630 gerado para cada viatura.
 - Ao tocar no cartão, o usuário é redirecionado para a viatura real no GitHub Pages.
+
+
+## 1.4.2 — 2026-09-29
+
+- Redesenhada a imagem dinâmica da placa para leitura boa tanto no WhatsApp Desktop quanto no WhatsApp mobile/web.
+- Todo o conteúdo essencial passou para uma área segura central compatível com recorte quadrado.
+- Placa ampliada, contraste aumentado e botão visual simplificado.
+- Link compartilhado recebeu versão de cache para forçar o WhatsApp a buscar a nova prévia.
+- `og:image:alt` adicionado e cache da imagem reduzido para facilitar atualizações.
