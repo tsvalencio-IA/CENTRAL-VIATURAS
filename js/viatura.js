@@ -14,7 +14,8 @@
   }
 
   const params=new URLSearchParams(location.search);
-  const requestedPlate=D.plate(params.get('placa')||'');
+  const rawShortQuery=location.search && !location.search.includes('=') ? decodeURIComponent(location.search.slice(1)) : '';
+  const requestedPlate=D.plate(params.get('placa')||params.get('p')||rawShortQuery||'');
   const requestedOs=params.get('os')||'';
 
   function showLogin(){
@@ -316,16 +317,14 @@
   }
 
   function shareUrl(){
-    const url=new URL('viatura.html',location.href);
-    url.search='';
+    const url=new URL('v.html',location.href);
+    url.search='?'+encodeURIComponent(currentPlate());
     url.hash='';
-    url.searchParams.set('placa',currentPlate());
     return url.toString();
   }
 
   function shareMessage(){
-    const p=currentPlate();
-    return `🟩 *[ ${p} ]*\n🔧 *ABRIR ACOMPANHAMENTO DA VIATURA*\n👇 Toque no link abaixo:\n${shareUrl()}`;
+    return `ATUALIZAÇÃO PLACA "${currentPlate()}" ${shareUrl()}`;
   }
 
   async function shareCurrent(){
