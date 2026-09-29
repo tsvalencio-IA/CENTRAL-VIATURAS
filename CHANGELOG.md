@@ -32,3 +32,9 @@
 - Toda ação da Central gera `centralViaturasRelatorio` dentro da mesma O.S. e também acrescenta uma linha de auditoria em `timeline`.
 - Recados continuam em `etapasInternas`, agora também refletidos no relatório operacional da própria O.S.
 - Nenhum valor financeiro foi adicionado ao painel.
+
+## 1.1.1 — 2026-09-29
+
+- Compartilhamento do WhatsApp agora usa somente a placa no link público, sem expor o ID da O.S.
+- Mensagem compartilhada destaca a placa como um pseudo-botão visual: `🟩 *[ PLACA ]*` + `🔧 ABRIR ACOMPANHAMENTO DA VIATURA`.
+- Link canônico gerado no formato `viatura.html?placa=PLACA`.
