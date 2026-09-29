@@ -13,7 +13,7 @@ module.exports = function handler(req, res) {
   const host = req.headers.host;
   const origin = proto + '://' + host;
   const target = 'https://tsvalencio-ia.github.io/CENTRAL-VIATURAS/v.html?' + encodeURIComponent(plate);
-  const image = origin + '/preview/' + encodeURIComponent(plate) + '?v=142';
+  const image = origin + '/preview/' + encodeURIComponent(plate) + '?v=143';
   const title = '🚙 ' + plate;
   const description = 'ABRIR VIATURA • Central de Viaturas';
   res.setHeader('Content-Type','text/html; charset=utf-8');
