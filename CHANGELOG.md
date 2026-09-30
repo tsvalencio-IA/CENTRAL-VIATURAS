@@ -144,3 +144,14 @@
 - Registro manual no controle gerencial passa a exigir perfil de gestão.
 - Atualizações confidenciais de peça deixam de entrar na timeline comum da O.S.; ficam registradas na auditoria gerencial.
 - Mecânicos continuam podendo concluir itens de peça do CHECKLIS_SOS, sem acesso ao relatório gerencial consolidado.
+
+
+## 1.4.7 — 2026-09-30
+
+- Perfil de equipe/mecânico passa a ver somente o necessário para execução: peças a trocar e serviços a fazer.
+- Equipe não consulta nem visualiza fornecedor, NF, origem de compra ou cotações.
+- Status de compra e responsável pela compra deixam de aparecer para equipe.
+- Visão completa do checklist, atenções, NF, cotações e controle gerencial ficam restritos à gestão.
+- Linguagem da equipe deixa de exibir “peça realmente trocada”; usa “concluída”.
+- Gestão recebe quadro “O QUE AINDA FALTA FAZER” com contadores de serviços, peças, atenções e compras pendentes.
+- Impressão da equipe não inclui controle gerencial, compras ou atenções da gestão.
