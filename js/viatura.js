@@ -81,7 +81,14 @@
   }
 
   function renderChecklist(){
-    const c=D.checklistSummary(os),root=$('checklist');
+    const panel=$('checklistSummaryPanel'),root=$('checklist');
+    if(!D.isManager(session)){
+      if(panel) panel.hidden=true;
+      if(root) root.innerHTML='';
+      return;
+    }
+    if(panel) panel.hidden=false;
+    const c=D.checklistSummary(os);
     if(!c.exists){
       root.innerHTML='<div class="empty">Ainda não existe checklist anexado nesta O.S.</div>';
       $('checkProgress').style.width='0%';
