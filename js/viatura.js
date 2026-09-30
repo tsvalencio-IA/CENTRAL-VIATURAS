@@ -142,14 +142,14 @@
 
   function renderChecklistItem(item){
     const state=D.checklistExecution(os,item.key);
-    const purchase=D.checklistPurchase(os,item.key);
     const status=String(state.status||'pendente');
     const done=D.executionFinished(status)||status==='resolvido';
     const gestor=D.isManager(session);
-    const bought=purchase?.comprado===true;
-    const label=item.group==='peca'?'PEÇA DO CHECKLIST':item.group==='servico'?'SERVIÇO DO CHECKLIST':'ATENÇÃO / OBSERVAR';
-    const doneLabel=item.group==='peca'?'TROCADA':item.group==='servico'?'EXECUTADO':'RESOLVIDO';
-    const actionLabel=item.group==='peca'?'MARCAR TROCADA':item.group==='servico'?'MARCAR EXECUTADO':'MARCAR RESOLVIDO';
+    const purchase=gestor?D.checklistPurchase(os,item.key):{};
+    const bought=gestor&&purchase?.comprado===true;
+    const label=item.group==='peca'?'PEÇA A TROCAR':item.group==='servico'?'SERVIÇO A FAZER':'ATENÇÃO / OBSERVAR';
+    const doneLabel=item.group==='peca'?(gestor?'TROCADA':'CONCLUÍDA'):item.group==='servico'?'EXECUTADO':'RESOLVIDO';
+    const actionLabel=item.group==='peca'?(gestor?'MARCAR TROCADA':'MARCAR CONCLUÍDA'):item.group==='servico'?'MARCAR EXECUTADO':'MARCAR RESOLVIDO';
     const buyButton=item.group==='peca'&&gestor
       ? '<button class="btn '+(bought?'':'purchase')+'" data-check-buy-key="'+D.escapeHtml(item.key)+'" data-bought="'+(bought?'1':'0')+'">'+(bought?'DESMARCAR COMPRA':'MARCAR COMPRADA')+'</button>'
       : '';
@@ -160,10 +160,10 @@
         '<div class="op-meta">'+D.escapeHtml(item.secao||'Checklist')+(item.acaoLabel?' • '+D.escapeHtml(item.acaoLabel):'')+(item.obs?' • '+D.escapeHtml(item.obs):'')+'</div>'+
         '<div class="op-statuses">'+
           (done?'<span class="state-chip ok">'+doneLabel+'</span>':'<span class="state-chip">PENDENTE</span>')+
-          (item.group==='peca'?(bought?'<span class="state-chip bought">COMPRADA</span>':'<span class="state-chip">COMPRA PENDENTE</span>'):'')+
+          (item.group==='peca'&&gestor?(bought?'<span class="state-chip bought">COMPRADA</span>':'<span class="state-chip">COMPRA PENDENTE</span>'):'')+
         '</div>'+
         (state?.atualizadoPor?'<div class="op-audit">Execução: '+D.escapeHtml(state.atualizadoPor)+(state.atualizadoEm?' • '+D.escapeHtml(D.fmt(state.atualizadoEm)):'')+'</div>':'')+
-        (purchase?.compradoPor?'<div class="op-audit">Compra: '+D.escapeHtml(purchase.compradoPor)+(purchase.compradoEm?' • '+D.escapeHtml(D.fmt(purchase.compradoEm)):'')+'</div>':'')+
+        (gestor&&purchase?.compradoPor?'<div class="op-audit">Compra: '+D.escapeHtml(purchase.compradoPor)+(purchase.compradoEm?' • '+D.escapeHtml(D.fmt(purchase.compradoEm)):'')+'</div>':'')+
       '</div>'+
       '<div class="op-actions">'+
         '<button class="btn '+(done?'success':'primary')+'" data-check-exec-key="'+D.escapeHtml(item.key)+'" data-done="'+(done?'1':'0')+'">'+(done?'REABRIR':actionLabel)+'</button>'+
@@ -172,9 +172,26 @@
     '</article>';
   }
 
+  function managerPendingSummary(pendingOS,pp,ps,pa){
+    const total=pendingOS.length+pp.pending.length+ps.pending.length+pa.pending.length;
+    const bought=pp.pending.filter(x=>D.checklistPurchase(os,x.key)?.comprado===true).length;
+    const buyPending=Math.max(0,pp.pending.length-bought);
+    return '<div class="management-pending">'+
+      '<div class="management-pending-title"><b>O QUE AINDA FALTA FAZER</b><span>'+total+' pendência(s)</span></div>'+
+      '<div class="management-pending-grid">'+
+        '<div><b>'+pendingOS.length+'</b><span>serviços da O.S.</span></div>'+
+        '<div><b>'+pp.pending.length+'</b><span>peças a trocar</span></div>'+
+        '<div><b>'+ps.pending.length+'</b><span>serviços do checklist</span></div>'+
+        '<div><b>'+pa.pending.length+'</b><span>atenções</span></div>'+
+        '<div><b>'+buyPending+'</b><span>peças com compra pendente</span></div>'+
+      '</div>'+
+    '</div>';
+  }
+
   function renderOperational(){
     renderPermission();
     const root=$('operationalItems');
+    const gestor=D.isManager(session);
     const osServices=D.operationalItems(os).filter(x=>x.tipo==='servico');
     const pendingOS=osServices.filter(x=>!D.executionFinished(String(x.execucao?.status||'pendente')));
     const doneOS=osServices.filter(x=>D.executionFinished(String(x.execucao?.status||'pendente')));
@@ -191,14 +208,25 @@
       })
     });
     const pp=split(plan.pecasTrocar), ps=split(plan.servicosExecutar), pa=split(plan.atencoes);
-    const completed=[...doneOS,...pp.done,...ps.done,...pa.done];
 
-    root.innerHTML=
-      opGroup('os-services','SERVIÇOS DA O.S.','Serviços cadastrados na própria ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente da O.S.')+
-      opGroup('check-parts','PEÇAS A TROCAR — CHECKLIST','Itens marcados como Trocar no CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça marcada para troca no checklist.')+
-      opGroup('check-services','SERVIÇOS A EXECUTAR — CHECKLIST','Retificar, regular, ajustar, lubrificar ou limpar',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente do checklist.')+
-      opGroup('check-attention','ATENÇÕES / OBSERVAR — CHECKLIST','Itens marcados como Atenção ou Revisar',pa.pending,renderChecklistItem,'Nenhum item de atenção pendente.')+
-      opGroup('completed','CONCLUÍDOS / EXECUTADOS','Quando é concluído, sai das listas acima e aparece aqui',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+    if(gestor){
+      const completed=[...doneOS,...pp.done,...ps.done,...pa.done];
+      root.innerHTML=
+        managerPendingSummary(pendingOS,pp,ps,pa)+
+        opGroup('os-services','SERVIÇOS DA O.S.','Serviços cadastrados na própria ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente da O.S.')+
+        opGroup('check-parts','PEÇAS A TROCAR — CHECKLIST','Itens marcados como Trocar no CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça marcada para troca no checklist.')+
+        opGroup('check-services','SERVIÇOS A EXECUTAR — CHECKLIST','Retificar, regular, ajustar, lubrificar ou limpar',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente do checklist.')+
+        opGroup('check-attention','ATENÇÕES / OBSERVAR — CHECKLIST','Itens marcados como Atenção ou Revisar',pa.pending,renderChecklistItem,'Nenhum item de atenção pendente.')+
+        opGroup('completed','CONCLUÍDOS / EXECUTADOS','Itens concluídos saem das pendências e ficam aqui',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+    }else{
+      // Equipe vê somente o necessário para executar o trabalho.
+      const completed=[...doneOS,...pp.done,...ps.done];
+      root.innerHTML=
+        opGroup('os-services','SERVIÇOS A FAZER','Serviços da ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente.')+
+        opGroup('check-parts','PEÇAS A TROCAR','Peças indicadas pelo CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça pendente de troca.')+
+        opGroup('check-services','SERVIÇOS DO CHECKLIST','Serviços técnicos indicados pelo CHECKLIS_SOS',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente.')+
+        opGroup('completed','CONCLUÍDOS','Itens já concluídos pela equipe',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+    }
 
     root.querySelectorAll('[data-collapse-group]').forEach(btn=>btn.addEventListener('click',()=>{
       const id=btn.dataset.collapseGroup;
@@ -211,7 +239,7 @@
       btn.disabled=true;
       try{
         await D.setExecutionState(db,session,os.id,btn.dataset.execKey,!done);
-        toast(done?'Serviço reaberto na O.S.':'Serviço marcado como executado na O.S.','ok');
+        toast(done?'Serviço reaberto.':'Serviço marcado como executado.','ok');
       }catch(e){ toast(e.message||'Não foi possível atualizar a execução.','err'); }
       finally{ btn.disabled=false; }
     }));
@@ -221,11 +249,12 @@
       btn.disabled=true;
       try{
         const r=await D.setChecklistExecutionState(db,session,os.id,btn.dataset.checkExecKey,!done);
+        const manager=D.isManager(session);
         const msg=r?.item?.group==='peca'
-          ? (done?'Troca reaberta.':'Peça registrada como realmente trocada.')
+          ? (done?'Item reaberto.':(manager?'Controle da peça atualizado.':'Peça concluída.'))
           : r?.item?.group==='atencao'
             ? (done?'Atenção reaberta.':'Atenção marcada como resolvida.')
-            : (done?'Serviço reaberto.':'Serviço do checklist executado.');
+            : (done?'Serviço reaberto.':'Serviço executado.');
         toast(msg,'ok');
       }catch(e){ toast(e.message||'Não foi possível atualizar o checklist.','err'); }
       finally{ btn.disabled=false; }
@@ -236,7 +265,7 @@
       btn.disabled=true;
       try{
         await D.setChecklistPurchaseState(db,session,os.id,btn.dataset.checkBuyKey,!bought);
-        toast(bought?'Compra reaberta.':'Peça do checklist marcada como comprada.','ok');
+        toast(bought?'Compra reaberta.':'Peça marcada como comprada.','ok');
       }catch(e){ toast(e.message||'Não foi possível atualizar a compra.','err'); }
       finally{ btn.disabled=false; }
     }));
@@ -277,7 +306,7 @@
       rows('SERVIÇOS DA O.S.',osServices,'os')+
       rows('PEÇAS A TROCAR — CHECKLIST',plan.pecasTrocar,'check')+
       rows('SERVIÇOS A EXECUTAR — CHECKLIST',plan.servicosExecutar,'check')+
-      rows('ATENÇÕES / OBSERVAR — CHECKLIST',plan.atencoes,'check')+
+      (D.isManager(session)?rows('ATENÇÕES / OBSERVAR — CHECKLIST',plan.atencoes,'check'):'')+
       (D.isManager(session)?rows('CONTROLE GERENCIAL DE PEÇAS',real,'real'):'')+
       '<div class="footer">Powered by thIAguinho Soluções Digitais</div></body></html>');
     w.document.close();
@@ -307,7 +336,9 @@
   }
 
   function renderNF(){
-    const root=$('purchased');
+    const panel=$('managerNfPanel'),root=$('purchased');
+    if(!D.isManager(session)){ if(panel) panel.hidden=true; if(root) root.innerHTML=''; return; }
+    if(panel) panel.hidden=false;
     if(!extras.nf.length){
       root.innerHTML='<div class="empty">Nenhum vínculo de nota/peça acessível para esta O.S. neste perfil.</div>';
       return;
@@ -320,7 +351,9 @@
   }
 
   function renderCotacoes(){
-    const root=$('quotes');
+    const panel=$('managerQuotesPanel'),root=$('quotes');
+    if(!D.isManager(session)){ if(panel) panel.hidden=true; if(root) root.innerHTML=''; return; }
+    if(panel) panel.hidden=false;
     if(!extras.cotacoes.length){
       root.innerHTML='<div class="empty">Nenhuma cotação compartilhada encontrada para esta O.S. O COTAR local continua preservado até a sincronização central.</div>';
       return;
@@ -359,7 +392,7 @@
     const report=D.reportEvents(os).filter(e=>{
       if(manager) return true;
       const a=String(e?.acao||'');
-      if(['registrou_peca_real_trocada','marcou_peca_trocada'].includes(a)) return false;
+      if(['registrou_peca_real_trocada','marcou_peca_trocada','marcou_peca_comprada','desmarcou_peca_comprada','marcou_peca_checklist_comprada','reabriu_compra_peca_checklist'].includes(a)) return false;
       return true;
     });
     report.forEach(e=>ev.push({
