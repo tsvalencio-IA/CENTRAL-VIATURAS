@@ -12,9 +12,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Viaturas">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="css/app.css?v=1.4.6">
-  <script src="js/theme.js?v=1.4.6"></script>
-  <script defer src="js/install.js?v=1.4.6"></script>
+  <link rel="stylesheet" href="css/app.css?v=1.4.7">
+  <script src="js/theme.js?v=1.4.7"></script>
+  <script defer src="js/install.js?v=1.4.7"></script>
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden">
@@ -69,17 +69,17 @@
 
     <div class="detail-grid">
       <div class="stack">
-        <section class="panel"><h2>Checklist / o que precisa ser feito</h2><div class="progress"><span id="checkProgress" style="width:0%"></span></div><div id="checkLabel" class="panel-sub" style="margin-top:7px">Carregando...</div><div id="checklist" class="rows"></div></section>
+        <section class="panel" id="checklistSummaryPanel" hidden><h2>Checklist / visão completa da gestão</h2><div class="progress"><span id="checkProgress" style="width:0%"></span></div><div id="checkLabel" class="panel-sub" style="margin-top:7px">Carregando...</div><div id="checklist" class="rows"></div></section>
 
         <section class="panel"><h2>Etapas / recados internos da O.S.</h2><div class="panel-sub"><span id="recCount">0 pendente(s)</span> • gravado na própria O.S. e no relatório operacional</div><form id="recadoForm" class="recado-form"><input id="recadoText" maxlength="220" placeholder="Ex.: soldar porta L/E / veículo foi para alinhamento" required><button id="addRecado" class="btn primary" type="submit">+ REGISTRAR</button></form><div id="recados" class="rows" style="margin-top:10px"></div></section>
 
         <section class="panel" id="realPartsPanel" hidden><h2>Controle gerencial de peças</h2><div class="panel-sub">Área confidencial disponível somente para gestor, gerente e administrador.</div><form id="realPartForm" class="real-part-form" autocomplete="off"><input id="realPartDesc" class="search" placeholder="Registrar peça no controle gerencial (ex.: correia dentada)" required><input id="realPartCode" class="search" placeholder="Código (opcional)"><input id="realPartQty" class="search qty" type="number" min="0.001" step="0.001" value="1" inputmode="decimal" aria-label="Quantidade"><button id="addRealPart" type="submit" class="btn success">+ REGISTRAR</button></form><div id="pieces" class="rows"></div></section>
 
-        <section class="panel"><h2>Peças compradas / vinculadas por NF</h2><div class="panel-sub">Evidência fiscal já existente no SAAS-2. A marcação manual “comprada” acima fica separada e auditada dentro da O.S.</div><div id="purchased" class="rows"></div></section>
+        <section class="panel" id="managerNfPanel" hidden><h2>Peças compradas / vinculadas por NF</h2><div class="panel-sub">Evidência fiscal já existente no SAAS-2. A marcação manual “comprada” acima fica separada e auditada dentro da O.S.</div><div id="purchased" class="rows"></div></section>
       </div>
 
       <div class="stack">
-        <section class="panel"><h2>Cotações vinculadas</h2><div class="panel-sub">Sem preços. O COTAR local continua preservado até a sincronização central.</div><div id="quotes" class="rows"></div></section>
+        <section class="panel" id="managerQuotesPanel" hidden><h2>Cotações vinculadas</h2><div class="panel-sub">Sem preços. O COTAR local continua preservado até a sincronização central.</div><div id="quotes" class="rows"></div></section>
         <section class="panel"><h2>Relatório operacional da O.S.</h2><div class="panel-sub">Execução, compras, recados, checklist e vínculos registrados por data e usuário.</div><div id="timeline" class="timeline"></div></section>
       </div>
     </div>
@@ -97,10 +97,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=1.4.6"></script>
-<script src="js/auth.js?v=1.4.6"></script>
-<script src="js/data.js?v=1.4.6"></script>
-<script src="js/viatura.js?v=1.4.6"></script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.6').catch(()=>{});</script>
+<script src="js/config.js?v=1.4.7"></script>
+<script src="js/auth.js?v=1.4.7"></script>
+<script src="js/data.js?v=1.4.7"></script>
+<script src="js/viatura.js?v=1.4.7"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.7').catch(()=>{});</script>
 </body>
 </html>
