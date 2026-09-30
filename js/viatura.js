@@ -47,11 +47,11 @@
     if(gestor){
       badge.textContent='GESTÃO';
       badge.className='permission-badge manager';
-      el.innerHTML='<b>Gestor / gerente / admin:</b> pode registrar peça realmente trocada, marcar serviço executado e registrar compra. As peças exibidas vêm somente do controle real da O.S., nunca da lista de peças orçadas.';
+      el.innerHTML='<b>Gestor / gerente / admin:</b> pode controlar execução, compras e informações gerenciais de peças da O.S.';
     }else{
       badge.textContent='EQUIPE';
       badge.className='permission-badge team';
-      el.innerHTML='<b>Equipe:</b> pode registrar peça realmente trocada e marcar serviço executado. A marcação de compra fica disponível somente para gestão.';
+      el.innerHTML='<b>Equipe:</b> pode atualizar serviços e itens do checklist. Informações gerenciais confidenciais de peças ficam ocultas neste perfil.';
     }
   }
 
@@ -278,7 +278,7 @@
       rows('PEÇAS A TROCAR — CHECKLIST',plan.pecasTrocar,'check')+
       rows('SERVIÇOS A EXECUTAR — CHECKLIST',plan.servicosExecutar,'check')+
       rows('ATENÇÕES / OBSERVAR — CHECKLIST',plan.atencoes,'check')+
-      rows('PEÇAS REALMENTE TROCADAS',real,'real')+
+      (D.isManager(session)?rows('CONTROLE GERENCIAL DE PEÇAS',real,'real'):'')+
       '<div class="footer">Powered by thIAguinho Soluções Digitais</div></body></html>');
     w.document.close();
     setTimeout(()=>w.print(),250);
@@ -286,9 +286,17 @@
 
 
   function renderPieces(){
-    const pieces=D.osPieces(os),root=$('pieces');
+    const panel=$('realPartsPanel');
+    const root=$('pieces');
+    if(!D.isManager(session)){
+      if(panel) panel.hidden=true;
+      if(root) root.innerHTML='';
+      return;
+    }
+    if(panel) panel.hidden=false;
+    const pieces=D.osPieces(os);
     if(!pieces.length){
-      root.innerHTML='<div class="empty">Nenhuma peça realmente trocada registrada no controle real desta O.S.</div>';
+      root.innerHTML='<div class="empty">Nenhum registro gerencial de peça nesta O.S.</div>';
       return;
     }
     root.innerHTML=pieces.map(p=>`
@@ -347,7 +355,13 @@
 
   function renderTimeline(){
     const ev=[];
-    const report=D.reportEvents(os);
+    const manager=D.isManager(session);
+    const report=D.reportEvents(os).filter(e=>{
+      if(manager) return true;
+      const a=String(e?.acao||'');
+      if(['registrou_peca_real_trocada','marcou_peca_trocada'].includes(a)) return false;
+      return true;
+    });
     report.forEach(e=>ev.push({
       t:D.ts(e.data),
       title:reportTitle(e),
@@ -495,7 +509,9 @@
   }));
 
   const realPartForm=$('realPartForm');
-  if(realPartForm) realPartForm.addEventListener('submit',async ev=>{
+  if(realPartForm){
+    if(!D.isManager(session)) realPartForm.closest('#realPartsPanel')?.setAttribute('hidden','');
+    realPartForm.addEventListener('submit',async ev=>{
     ev.preventDefault();
     const descricao=$('realPartDesc')?.value?.trim()||'';
     const codigo=$('realPartCode')?.value?.trim()||'';
@@ -513,7 +529,8 @@
     }finally{
       if(btn) btn.disabled=false;
     }
-  });
+    });
+  }
 
   $('recadoForm').addEventListener('submit',async ev=>{
     ev.preventDefault();
