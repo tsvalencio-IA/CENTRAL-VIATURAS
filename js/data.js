@@ -461,6 +461,8 @@
     return candidates[0];
   }
   async function loadOperationalExtras(db,session,os,plateValue){
+    // Dados de fornecedor, NF e cotação são confidenciais e só são consultados pela gestão.
+    if(!isManager(session)) return {nf:[],cotacoes:[]};
     const p=plate(plateValue);
     const osId=String(os?.id||'');
     const nf=[],cot=[];
