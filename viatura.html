@@ -12,9 +12,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Viaturas">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="css/app.css?v=1.4.5">
-  <script src="js/theme.js?v=1.4.5"></script>
-  <script defer src="js/install.js?v=1.4.5"></script>
+  <link rel="stylesheet" href="css/app.css?v=1.4.6">
+  <script src="js/theme.js?v=1.4.6"></script>
+  <script defer src="js/install.js?v=1.4.6"></script>
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden">
@@ -73,7 +73,7 @@
 
         <section class="panel"><h2>Etapas / recados internos da O.S.</h2><div class="panel-sub"><span id="recCount">0 pendente(s)</span> • gravado na própria O.S. e no relatório operacional</div><form id="recadoForm" class="recado-form"><input id="recadoText" maxlength="220" placeholder="Ex.: soldar porta L/E / veículo foi para alinhamento" required><button id="addRecado" class="btn primary" type="submit">+ REGISTRAR</button></form><div id="recados" class="rows" style="margin-top:10px"></div></section>
 
-        <section class="panel"><h2>Peças realmente trocadas</h2><div class="panel-sub">Mesma fonte de verdade das peças reais/instaladas da O.S.; sem preços e sem listar peças apenas orçadas.</div><form id="realPartForm" class="real-part-form" autocomplete="off"><input id="realPartDesc" class="search" placeholder="Peça realmente trocada (ex.: correia dentada)" required><input id="realPartCode" class="search" placeholder="Código (opcional)"><input id="realPartQty" class="search qty" type="number" min="0.001" step="0.001" value="1" inputmode="decimal" aria-label="Quantidade"><button id="addRealPart" type="submit" class="btn success">+ REGISTRAR TROCADA</button></form><div id="pieces" class="rows"></div></section>
+        <section class="panel" id="realPartsPanel" hidden><h2>Controle gerencial de peças</h2><div class="panel-sub">Área confidencial disponível somente para gestor, gerente e administrador.</div><form id="realPartForm" class="real-part-form" autocomplete="off"><input id="realPartDesc" class="search" placeholder="Registrar peça no controle gerencial (ex.: correia dentada)" required><input id="realPartCode" class="search" placeholder="Código (opcional)"><input id="realPartQty" class="search qty" type="number" min="0.001" step="0.001" value="1" inputmode="decimal" aria-label="Quantidade"><button id="addRealPart" type="submit" class="btn success">+ REGISTRAR</button></form><div id="pieces" class="rows"></div></section>
 
         <section class="panel"><h2>Peças compradas / vinculadas por NF</h2><div class="panel-sub">Evidência fiscal já existente no SAAS-2. A marcação manual “comprada” acima fica separada e auditada dentro da O.S.</div><div id="purchased" class="rows"></div></section>
       </div>
@@ -97,10 +97,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=1.4.5"></script>
-<script src="js/auth.js?v=1.4.5"></script>
-<script src="js/data.js?v=1.4.5"></script>
-<script src="js/viatura.js?v=1.4.5"></script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.5').catch(()=>{});</script>
+<script src="js/config.js?v=1.4.6"></script>
+<script src="js/auth.js?v=1.4.6"></script>
+<script src="js/data.js?v=1.4.6"></script>
+<script src="js/viatura.js?v=1.4.6"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js?v=1.4.6').catch(()=>{});</script>
 </body>
 </html>
