@@ -104,3 +104,14 @@ button,input,select,textarea{font:inherit;max-width:100%}button{touch-action:man
   .login-quick-actions{gap:5px}
   .login-quick-actions .btn{padding-left:8px;padding-right:8px}
 }
+
+.management-pending{margin:10px 0 12px;border:1px solid var(--line);border-radius:14px;background:var(--panel3);padding:12px}
+.management-pending-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.management-pending-title b{font-size:12px;letter-spacing:.3px}
+.management-pending-title span{font-size:10px;color:var(--muted);font-weight:800}
+.management-pending-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.management-pending-grid>div{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:10px;min-width:0}
+.management-pending-grid b{display:block;font-size:20px;line-height:1;color:var(--brand);margin-bottom:5px}
+.management-pending-grid span{display:block;font-size:9px;color:var(--muted);line-height:1.25}
+@media(max-width:900px){.management-pending-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.management-pending-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.management-pending-title{align-items:flex-start;flex-direction:column}}
