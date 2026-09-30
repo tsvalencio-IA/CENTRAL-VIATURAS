@@ -598,7 +598,7 @@
   }
 
   async function addRealPart(db,session,osId,input){
-    if(!canExecute(session)) throw new Error('Seu perfil não pode registrar peça trocada.');
+    if(!isManager(session)) throw new Error('Somente gestão pode acessar o controle confidencial de peças.');
     const descricao=String(input?.descricao||'').trim();
     const codigo=String(input?.codigo||'').trim();
     const qtd=Math.max(0.0001,Number(input?.qtd||1)||1);
@@ -707,7 +707,7 @@
         }
       }
 
-      const verb=item.group==='peca'?(done?'peça marcada como realmente trocada':'troca reaberta'):
+      const verb=item.group==='peca'?(done?'item de peça do checklist concluído':'item de peça do checklist reaberto'):
         item.group==='atencao'?(done?'atenção marcada como resolvida':'atenção reaberta'):
         (done?'serviço do checklist executado':'serviço do checklist reaberto');
 
