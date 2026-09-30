@@ -605,6 +605,7 @@
     if(!descricao&&!codigo) throw new Error('Informe a peça trocada.');
 
     const ref=db.collection(CFG.collections.os).doc(osId);
+    const auditRef=db.collection('lixeira_auditoria').doc();
     const agora=new Date().toISOString();
     let created=null;
 
@@ -636,10 +637,26 @@
       tx.update(ref,{
         pecasReais:list,
         centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
-        timeline:pushTimeline(atual.timeline,session.name,`Central: registrou peça realmente trocada — ${descricao||codigo}`,agora),
         centralViaturasAtualizadoEm:agora,
         centralViaturasAtualizadoPor:session.name||'Usuário',
         updatedAt:agora
+      });
+      tx.set(auditRef,{
+        tenantId:session.tenantId||'',
+        modulo:'CENTRAL / GESTÃO',
+        acao:'Atualização confidencial do controle gerencial de peças',
+        usuario:session.name||'Gestão',
+        usuarioId:session.funcionarioId||session.email||'',
+        perfil:session.role||session.cargo||'gestao',
+        entidade:'ordens_servico',
+        entidadeId:osId,
+        placa:getOSPlate(atual),
+        item:descricao||codigo,
+        codigo,
+        qtd,
+        ts:agora,
+        createdAt:agora,
+        confidencial:true
       });
     });
 
