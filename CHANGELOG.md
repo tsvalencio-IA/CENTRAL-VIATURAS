@@ -133,3 +133,14 @@
 - Corrigido cenário em que um item com ação real `revisar` podia herdar label antigo `Trocar`.
 - Classificação passa a ser sempre: `trocar` → peça; retificar/regular/ajustar/lubrificar/limpar → serviço; atenção/revisar → atenção.
 - `checklistOperacional` e `checklistUltimo` ficam apenas como fallback quando o payload completo não existe.
+
+
+## 1.4.6 — 2026-09-30
+
+- Controle de peças reais passa a ser área confidencial de gestão.
+- Equipe/mecânicos não visualizam a seção, lista ou formulário gerencial de peças.
+- Impressão da equipe não inclui o controle gerencial de peças.
+- Eventos explícitos de peça real são filtrados do relatório visual da equipe.
+- Registro manual no controle gerencial passa a exigir perfil de gestão.
+- Atualizações confidenciais de peça deixam de entrar na timeline comum da O.S.; ficam registradas na auditoria gerencial.
+- Mecânicos continuam podendo concluir itens de peça do CHECKLIS_SOS, sem acesso ao relatório gerencial consolidado.
