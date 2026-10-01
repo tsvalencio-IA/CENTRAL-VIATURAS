@@ -351,9 +351,12 @@
     const codigo=String(doc.codigo||doc.codigoFornecedor||doc.codigoComercial||'').trim();
     if(!descricao&&!codigo) return null;
     return {
-      id:doc.id||'',descricao,codigo,qtd:doc.qtd??doc.quantidade??'',
-      fornecedor:String(doc.fornecedorNome||'').trim(),
-      nfNumero:String(doc.nfNumero||'').trim(),
+      id:doc.id||'',descricao,codigo,qtd:doc.qtd??doc.quantidade??doc.quantidadeOperacionalTotal??'',
+      marca:String(doc.marca||doc.fabricante||'').trim(),
+      codigoFornecedor:String(doc.codigoFornecedor||doc.codigoOriginal||'').trim(),
+      codigoComercial:String(doc.codigoComercial||doc.oem||'').trim(),
+      fornecedor:String(doc.fornecedorNome||doc.fornecedor||'').trim(),
+      nfNumero:String(doc.nfNumero||doc.nf||'').trim(),
       finalidade:String(doc.finalidade||doc.destino||'').trim(),
       status:String(doc.status||doc.statusAplicacao||'').trim(),
       createdAt:doc.createdAt||doc.updatedAt||''
