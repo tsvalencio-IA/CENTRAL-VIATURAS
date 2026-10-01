@@ -1,8 +1,8 @@
 {
   "id": "/CENTRAL-VIATURAS/viaturas-app-v2",
-  "name": "Central de Viaturas",
-  "short_name": "VIATURAS",
-  "description": "Acompanhamento operacional de viaturas integrado ao SAAS-2 e CHECKLIS_SOS",
+  "name": "Valêncio SOS — Acompanhamento",
+  "short_name": "Valêncio SOS",
+  "description": "Acompanhamento operacional de veículos da S.O.S. Valêncio integrado à oficina.",
   "start_url": "/CENTRAL-VIATURAS/index.html?app=viaturas-v2",
   "scope": "/CENTRAL-VIATURAS/",
   "display": "standalone",
@@ -21,19 +21,19 @@
   ],
   "icons": [
     {
-      "src": "https://viaturas.vercel.app/api/app-icon?size=192&v=144",
+      "src": "https://viaturas.vercel.app/api/app-icon?size=192&v=145",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://viaturas.vercel.app/api/app-icon?size=512&v=144",
+      "src": "https://viaturas.vercel.app/api/app-icon?size=512&v=145",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://viaturas.vercel.app/api/app-icon?size=512&maskable=1&v=144",
+      "src": "https://viaturas.vercel.app/api/app-icon?size=512&maskable=1&v=145",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -41,12 +41,12 @@
   ],
   "shortcuts": [
     {
-      "name": "Abrir Central",
-      "short_name": "Central",
+      "name": "Abrir Valêncio SOS",
+      "short_name": "Valêncio SOS",
       "url": "/CENTRAL-VIATURAS/index.html?app=viaturas-v2",
       "icons": [
         {
-          "src": "https://viaturas.vercel.app/api/app-icon?size=192&v=144",
+          "src": "https://viaturas.vercel.app/api/app-icon?size=192&v=145",
           "sizes": "192x192",
           "type": "image/png"
         }
