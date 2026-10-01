@@ -155,3 +155,13 @@
 - Linguagem da equipe deixa de exibir “peça realmente trocada”; usa “concluída”.
 - Gestão recebe quadro “O QUE AINDA FALTA FAZER” com contadores de serviços, peças, atenções e compras pendentes.
 - Impressão da equipe não inclui controle gerencial, compras ou atenções da gestão.
+
+
+## 1.4.8 — 2026-10-01
+
+- Identidade PWA da Central de Viaturas tornou-se explícita e exclusiva.
+- `id`: `/CENTRAL-VIATURAS/`.
+- `start_url`: `/CENTRAL-VIATURAS/index.html`.
+- `scope`: `/CENTRAL-VIATURAS/`.
+- Nome curto: `VIATURAS`.
+- Evita qualquer ambiguidade com o PWA COTARP/COTAR, que permanece no caminho `/COTAR/`.
