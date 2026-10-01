@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1118">
   <title>Viatura — Central</title>
-  <link rel="manifest" href="/CENTRAL-VIATURAS/manifest-viaturas-v2.webmanifest?v=1.4.9">
+  <link rel="manifest" href="/CENTRAL-VIATURAS/manifest-viaturas-v2.webmanifest?v=1.4.10">
   <link rel="icon" type="image/png" sizes="64x64" href="https://viaturas.vercel.app/api/app-icon?size=64&v=144">
   <link rel="apple-touch-icon" sizes="180x180" href="https://viaturas.vercel.app/api/app-icon?size=180&v=144">
   <meta name="application-name" content="Central de Viaturas">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Viaturas">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="css/app.css?v=1.4.9">
-  <script src="js/theme.js?v=1.4.9"></script>
-  <script defer src="js/install.js?v=1.4.9"></script>
+  <link rel="stylesheet" href="css/app.css?v=1.4.10">
+  <script src="js/theme.js?v=1.4.10"></script>
+  <script defer src="js/install.js?v=1.4.10"></script>
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden">
@@ -59,11 +59,11 @@
 
     <section class="panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-        <h2 style="margin:0">Execução, checklist e compras</h2>
+        <h2 style="margin:0">FILA OPERACIONAL — O QUE FALTA FAZER</h2>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span id="permissionBadge" class="permission-badge">PERFIL</span><button type="button" class="btn compact" data-print-operational>IMPRIMIR</button></div>
       </div>
       <div id="permissionNote" class="permission-box" style="margin-top:10px"></div>
-      <div class="panel-sub" style="margin-top:7px">Serviços da O.S., peças/serviços/atenções vindos do CHECKLIS_SOS e concluídos separados automaticamente. Cada bloco pode ser minimizado.</div>
+      <div class="panel-sub" style="margin-top:7px">Primeiro aparecem somente as pendências. Ao concluir uma peça ou serviço, ela sai de cima e vai automaticamente para CONCLUÍDOS no fim. Cada bloco pode ser minimizado.</div>
       <div id="operationalItems" class="operational-list"></div>
     </section>
 
@@ -97,10 +97,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=1.4.9"></script>
-<script src="js/auth.js?v=1.4.9"></script>
-<script src="js/data.js?v=1.4.9"></script>
-<script src="js/viatura.js?v=1.4.9"></script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/CENTRAL-VIATURAS/service-worker.js?v=1.4.9',{scope:'/CENTRAL-VIATURAS/'}).catch(()=>{});</script>
+<script src="js/config.js?v=1.4.10"></script>
+<script src="js/auth.js?v=1.4.10"></script>
+<script src="js/data.js?v=1.4.10"></script>
+<script src="js/viatura.js?v=1.4.10"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/CENTRAL-VIATURAS/service-worker.js?v=1.4.10',{scope:'/CENTRAL-VIATURAS/'}).catch(()=>{});</script>
 </body>
 </html>
