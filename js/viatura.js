@@ -29,6 +29,57 @@
     $('detailView').classList.remove('hidden');
     $('userLabel').textContent=`${session.name} • ${session.role}`;
   }
+
+  function panelCollapseStoreKey(key){ return 'CENTRAL_VIATURAS_PANEL_COLLAPSE::'+key; }
+  function setupPanelCollapsers(){
+    document.querySelectorAll('#detailContent section.panel').forEach((panel,index)=>{
+      if(panel.dataset.panelCollapseReady==='1') return;
+
+      let title=null,header=null;
+      for(const child of Array.from(panel.children)){
+        if(child.tagName==='H2'){ title=child; break; }
+      }
+      if(title){
+        header=document.createElement('div');
+        header.className='panel-collapse-head';
+        panel.insertBefore(header,title);
+        header.appendChild(title);
+      }else{
+        const first=panel.firstElementChild;
+        const nested=first?.querySelector?.('h2');
+        if(nested){
+          title=nested;
+          header=first;
+          header.classList.add('panel-collapse-head');
+        }
+      }
+      if(!title||!header) return;
+
+      const normalizedTitle=String(title.textContent||('painel-'+index)).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+      const key=panel.id||normalizedTitle||('painel-'+index);
+      panel.dataset.panelCollapseReady='1';
+      panel.dataset.panelCollapseKey=key;
+
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='panel-collapse-toggle';
+      button.setAttribute('aria-label','Minimizar ou maximizar este campo');
+      header.appendChild(button);
+
+      const apply=()=>{
+        const minimized=localStorage.getItem(panelCollapseStoreKey(key))==='1';
+        panel.classList.toggle('panel-minimized',minimized);
+        button.textContent=minimized?'MAXIMIZAR':'MINIMIZAR';
+        button.setAttribute('aria-expanded',minimized?'false':'true');
+      };
+      button.addEventListener('click',()=>{
+        const minimized=!panel.classList.contains('panel-minimized');
+        localStorage.setItem(panelCollapseStoreKey(key),minimized?'1':'0');
+        apply();
+      });
+      apply();
+    });
+  }
   function getVehicle(){
     return refs.vehicles.find(v=>String(v.id)===String(os?.veiculoId||''))||os?.veiculoSnapshot||{};
   }
@@ -111,12 +162,21 @@
 
 
   function collapseStoreKey(id){ return 'CENTRAL_VIATURAS_COLLAPSE::'+id; }
-  function isCollapsed(id){ return localStorage.getItem(collapseStoreKey(id))==='1'; }
+  function isCollapsed(id){
+    const saved=localStorage.getItem(collapseStoreKey(id));
+    if(saved!==null) return saved==='1';
+    return id==='completed';
+  }
   function setCollapsed(id,value){ localStorage.setItem(collapseStoreKey(id),value?'1':'0'); }
 
   function opGroup(id,title,subtitle,items,renderer,emptyText){
     const collapsed=isCollapsed(id);
-    return '<section class="op-group '+(collapsed?'collapsed':'')+'" data-op-group="'+D.escapeHtml(id)+'">'+
+    const kind=id==='os-services'?'origin-os':
+      id==='check-parts'?'origin-check-parts':
+      id==='check-services'?'origin-check-services':
+      id==='check-attention'?'origin-check-attention':
+      id==='completed'?'origin-completed':'';
+    return '<section class="op-group '+kind+' '+(collapsed?'collapsed':'')+'" data-op-group="'+D.escapeHtml(id)+'">'+
       '<button type="button" class="op-group-head" data-collapse-group="'+D.escapeHtml(id)+'">'+
         '<span><b>'+D.escapeHtml(title)+'</b><small>'+D.escapeHtml(subtitle||'')+'</small></span>'+
         '<span class="op-group-count">'+items.length+'</span>'+
@@ -134,7 +194,7 @@
     const disabled=item.approvalExists&&!item.aprovado;
     return '<article class="op-row '+(done?'is-done ':'')+(disabled?'is-disabled':'')+'">'+
       '<div class="op-main">'+
-        '<div class="op-type">SERVIÇO DA O.S.</div>'+
+        '<div class="op-type">ORIGEM: O.S. • SERVIÇO</div>'+
         '<div class="op-title">'+D.escapeHtml(item.descricao||item.codigo||item.key)+'</div>'+
         '<div class="op-meta">'+(item.codigo?'Cód. '+D.escapeHtml(item.codigo)+' • ':'')+'Serviço cadastrado na O.S.</div>'+
         '<div class="op-statuses">'+
@@ -162,7 +222,7 @@
       : '';
     return '<article class="op-row '+(done?'is-done':'')+'">'+
       '<div class="op-main">'+
-        '<div class="op-type">'+label+'</div>'+
+        '<div class="op-type">ORIGEM: CHECKLIST • '+label+'</div>'+
         '<div class="op-title">'+D.escapeHtml(item.item||'Item')+'</div>'+
         '<div class="op-meta">'+D.escapeHtml(item.secao||'Checklist')+(item.acaoLabel?' • '+D.escapeHtml(item.acaoLabel):'')+(item.obs?' • '+D.escapeHtml(item.obs):'')+'</div>'+
         '<div class="op-statuses">'+
@@ -195,6 +255,19 @@
     '</div>';
   }
 
+  function teamPendingSummary(pendingOS,pp,ps){
+    const total=pendingOS.length+pp.pending.length+ps.pending.length;
+    return '<div class="management-pending team-focus">'+
+      '<div class="management-pending-title"><b>FOCO AGORA — O QUE AINDA FALTA FAZER</b><span>'+total+' pendência(s)</span></div>'+
+      '<div class="management-pending-grid team-grid">'+
+        '<div><b>'+pendingOS.length+'</b><span>serviços da O.S.</span></div>'+
+        '<div><b>'+pp.pending.length+'</b><span>peças do checklist</span></div>'+
+        '<div><b>'+ps.pending.length+'</b><span>serviços do checklist</span></div>'+
+      '</div>'+
+      '<div class="focus-note">Concluiu? O item sai automaticamente das pendências e vai para CONCLUÍDOS no fim da tela.</div>'+
+    '</div>';
+  }
+
   function renderOperational(){
     renderPermission();
     const root=$('operationalItems');
@@ -220,19 +293,20 @@
       const completed=[...doneOS,...pp.done,...ps.done,...pa.done];
       root.innerHTML=
         managerPendingSummary(pendingOS,pp,ps,pa)+
-        opGroup('os-services','SERVIÇOS DA O.S.','Serviços cadastrados na própria ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente da O.S.')+
-        opGroup('check-parts','PEÇAS A TROCAR — CHECKLIST','Itens marcados como Trocar no CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça marcada para troca no checklist.')+
-        opGroup('check-services','SERVIÇOS A EXECUTAR — CHECKLIST','Retificar, regular, ajustar, lubrificar ou limpar',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente do checklist.')+
-        opGroup('check-attention','ATENÇÕES / OBSERVAR — CHECKLIST','Itens marcados como Atenção ou Revisar',pa.pending,renderChecklistItem,'Nenhum item de atenção pendente.')+
-        opGroup('completed','CONCLUÍDOS / EXECUTADOS','Itens concluídos saem das pendências e ficam aqui',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+        opGroup('os-services','O.S. — SERVIÇOS A EXECUTAR','Fonte: serviços cadastrados diretamente na ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente da O.S.')+
+        opGroup('check-parts','CHECKLIST — PEÇAS A TROCAR','Fonte: itens marcados como TROCAR no checklist',pp.pending,renderChecklistItem,'Nenhuma peça pendente vinda do checklist.')+
+        opGroup('check-services','CHECKLIST — SERVIÇOS A EXECUTAR','Fonte: retificar, regular, ajustar, lubrificar ou limpar',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente do checklist.')+
+        opGroup('check-attention','CHECKLIST — ATENÇÕES / REVISAR','Fonte: itens marcados como Atenção ou Revisar',pa.pending,renderChecklistItem,'Nenhum item de atenção pendente.')+
+        opGroup('completed','CONCLUÍDOS — HISTÓRICO','Tudo que foi concluído sai das pendências e vem para cá',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
     }else{
       // Equipe vê somente o necessário para executar o trabalho.
       const completed=[...doneOS,...pp.done,...ps.done];
       root.innerHTML=
-        opGroup('os-services','SERVIÇOS A FAZER','Serviços da ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente.')+
-        opGroup('check-parts','PEÇAS A TROCAR','Peças indicadas pelo CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça pendente de troca.')+
-        opGroup('check-services','SERVIÇOS DO CHECKLIST','Serviços técnicos indicados pelo CHECKLIS_SOS',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente.')+
-        opGroup('completed','CONCLUÍDOS','Itens já concluídos pela equipe',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+        teamPendingSummary(pendingOS,pp,ps)+
+        opGroup('os-services','O.S. — SERVIÇOS A FAZER','Somente serviços pendentes cadastrados na O.S.',pendingOS,renderOSService,'Nenhum serviço pendente.')+
+        opGroup('check-parts','CHECKLIST — PEÇAS A TROCAR','Somente peças pendentes indicadas pelo checklist',pp.pending,renderChecklistItem,'Nenhuma peça pendente de troca.')+
+        opGroup('check-services','CHECKLIST — SERVIÇOS A FAZER','Somente serviços técnicos pendentes indicados pelo checklist',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente.')+
+        opGroup('completed','CONCLUÍDOS — HISTÓRICO','Os itens concluídos são movidos automaticamente para este bloco',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
     }
 
     root.querySelectorAll('[data-collapse-group]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -454,6 +528,7 @@
     renderNF();
     renderCotacoes();
     renderTimeline();
+    setupPanelCollapsers();
     D.markRead(session,os.id,D.activityTs(os)||Date.now());
   }
 
