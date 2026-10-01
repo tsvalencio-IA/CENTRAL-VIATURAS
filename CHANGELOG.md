@@ -185,3 +185,21 @@
 - Criado resumo FOCO AGORA para a equipe, mostrando quantos serviços da O.S., peças do checklist e serviços do checklist ainda estão pendentes.
 - Origens ficaram visualmente e textualmente separadas: O.S., CHECKLIST — PEÇAS, CHECKLIST — SERVIÇOS, CHECKLIST — ATENÇÕES e CONCLUÍDOS.
 - Nenhuma lógica do Firebase, checklist, SAAS-2 ou COTARP foi alterada nesta versão.
+
+
+## 1.4.11 — 2026-10-01
+
+- Ativação final feita somente no repositório CENTRAL-VIATURAS.
+- Nova interface profissional Valêncio SOS para acompanhamento de todos os veículos.
+- Cliente oficial: equipe vê somente peças Cilia da O.S.; gestão vê peças e serviços Cilia/O.S. e controles de compra.
+- Cliente normal: equipe vê somente peças e serviços que exigem ação; gestão vê também controles gerenciais e compras.
+- Fluxo operacional com PENDENTE, EM EXECUÇÃO, CONCLUÍDO/TROCADA e IMPEDIDO / NÃO RESOLVEU.
+- Ao concluir, o item sai da área de pendências e vai automaticamente para CONCLUÍDOS — HISTÓRICO.
+- Impedimento exige observação objetiva do mecânico.
+- Checklist salvo na O.S. fica disponível como referência; painel inicia minimizado. Gestão recebe comparação informativa Checklist x O.S./Cilia sem alterar o CHECKLIS_SOS.
+- Todos os painéis principais continuam minimizáveis/maximizáveis com preferência apenas em localStorage; isso não gera escrita no Firebase.
+- Vínculo de peça comprada com peça da O.S./Cilia é exclusivo da gestão e não marca execução automaticamente.
+- Tela de veículo passou a carregar referências pontuais quando possível, reduzindo leituras desnecessárias.
+- Atualização de execução usa atualização pontual do item; navegação, minimizar/maximizar e filtros não escrevem no Firebase.
+- Novo branding PWA Valêncio SOS e novo ícone com veículo/acompanhamento.
+- Cache atualizado para central-viaturas-v1-4-11.
