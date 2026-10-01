@@ -1,8 +1,8 @@
-const CACHE='central-viaturas-v1-4-10';
+const CACHE='central-viaturas-v1-4-11';
 const ASSETS=[
-  './','./index.html','./viatura.html','./v.html','./css/app.css',
+  './','./index.html','./viatura.html','./v.html','./css/app.css','./css/v1411.css',
   './js/config.js','./js/theme.js','./js/install.js','./js/auth.js','./js/data.js',
-  './js/index.js','./js/viatura.js','./manifest-viaturas-v2.webmanifest?v=1.4.10'
+  './js/index.js','./js/workflow-v1411.js','./js/ui-v1411.js','./js/viatura.js','./manifest-viaturas-v2.webmanifest?v=1.4.11'
 ];
 
 self.addEventListener('install',event=>{
