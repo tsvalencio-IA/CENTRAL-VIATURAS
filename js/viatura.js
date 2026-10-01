@@ -67,7 +67,8 @@
       header.appendChild(button);
 
       const apply=()=>{
-        const minimized=localStorage.getItem(panelCollapseStoreKey(key))==='1';
+        const saved=localStorage.getItem(panelCollapseStoreKey(key));
+        const minimized=saved===null ? key==='checklistSummaryPanel' : saved==='1';
         panel.classList.toggle('panel-minimized',minimized);
         button.textContent=minimized?'MAXIMIZAR':'MINIMIZAR';
         button.setAttribute('aria-expanded',minimized?'false':'true');
@@ -514,6 +515,26 @@
       : '<div class="empty">Sem eventos operacionais para mostrar.</div>';
   }
 
+
+  function v1411Context(){
+    return {
+      D,$,os,session,db,refs,extras,toast,getClient,getVehicle,currentPlate,
+      isCollapsed,setCollapsed
+    };
+  }
+  function renderOperationalActive(){
+    if(window.CentralV1411UI?.renderOperational && D.buildWorkPlan) return window.CentralV1411UI.renderOperational(v1411Context());
+    return renderOperational();
+  }
+  function renderChecklistActive(){
+    if(window.CentralV1411UI?.renderChecklist && D.checklistComparison) return window.CentralV1411UI.renderChecklist(v1411Context());
+    return renderChecklist();
+  }
+  function renderNFActive(){
+    if(window.CentralV1411UI?.renderNF && D.setPurchaseLink) return window.CentralV1411UI.renderNF(v1411Context());
+    return renderNF();
+  }
+
   function renderAll(){
     const v=getVehicle(),c=getClient(),p=currentPlate(),status=String(os?.status||os?.etapa||'Sem status');
     $('plate').textContent=p;
@@ -521,11 +542,11 @@
     $('osNumber').textContent=D.getOSNumber(os)||os.id;
     $('client').textContent=D.getClientLabel(os,c)||'—';
     $('status').textContent=status;
-    renderOperational();
-    renderChecklist();
+    renderOperationalActive();
+    renderChecklistActive();
     renderRecados();
     renderPieces();
-    renderNF();
+    renderNFActive();
     renderCotacoes();
     renderTimeline();
     setupPanelCollapsers();
@@ -533,8 +554,10 @@
   }
 
   async function loadExtras(){
-    extras=await D.loadOperationalExtras(db,session,os,currentPlate());
-    renderNF();
+    extras=D.loadOperationalExtrasEfficient
+      ? await D.loadOperationalExtrasEfficient(db,session,os,currentPlate())
+      : await D.loadOperationalExtras(db,session,os,currentPlate());
+    renderNFActive();
     renderCotacoes();
     renderTimeline();
   }
@@ -554,7 +577,7 @@
     if(!session){ showLogin(); return; }
     showDetail();
     db=A.activeDb(session);
-    refs=await D.loadReferenceData(db,session);
+    refs={vehicles:[],clients:[]};
 
     if(requestedOs){
       try{
@@ -567,6 +590,9 @@
       $('detailContent').innerHTML='<div class="empty">Não encontrei uma O.S. desta placa para a sua oficina.</div>';
       return;
     }
+    refs=D.loadReferencesForOS
+      ? await D.loadReferencesForOS(db,session,os)
+      : await D.loadReferenceData(db,session);
     renderAll();
     await loadExtras();
     await subscribe();
@@ -584,7 +610,7 @@
     const url=shareUrl();
     const text=shareMessage();
     try{
-      if(navigator.share) await navigator.share({title:`🚙 ${currentPlate()} — Central de Viaturas`,text,url});
+      if(navigator.share) await navigator.share({title:`🚙 ${currentPlate()} — Valêncio SOS`,text,url});
       else{
         await navigator.clipboard.writeText(text);
         toast('Link da placa copiado.','ok');
