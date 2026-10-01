@@ -203,3 +203,19 @@
 - Atualização de execução usa atualização pontual do item; navegação, minimizar/maximizar e filtros não escrevem no Firebase.
 - Novo branding PWA Valêncio SOS e novo ícone com veículo/acompanhamento.
 - Cache atualizado para central-viaturas-v1-4-11.
+
+
+## 1.4.12 — 2026-10-01
+
+- Estabilização final da camada Valêncio SOS na CENTRAL-VIATURAS.
+- Cliente oficial: mecânico/equipe vê somente peças Cilia da O.S.; gestão vê peças e serviços Cilia e compras.
+- Cliente normal: equipe vê peças e serviços pendentes da O.S.; gestão vê também compras e vínculos.
+- Pendências ficam no topo; concluídos descem automaticamente para o histórico minimizado.
+- Todos os painéis e grupos operacionais podem ser minimizados/maximizados sem escrever no Firebase.
+- NÃO RESOLVEU / IMPEDIDO exige observação e permanece destacado.
+- Checklist salvo na O.S. fica como referência minimizada; gestão recebe comparação Checklist x O.S./Cilia.
+- Compra por NF pode ser vinculada à peça correspondente sem concluir a execução.
+- Marca, códigos, fornecedor e NF permanecem exclusivos da gestão.
+- Tela individual reduz leituras: busca somente referências necessárias e não relê NF/cotações a cada snapshot da O.S.
+- Impressão operacional respeita o mesmo perfil e a mesma regra de cliente oficial/normal da tela.
+- Nova identidade PWA Valêncio SOS preservando o ID e scope exclusivos /CENTRAL-VIATURAS/.
