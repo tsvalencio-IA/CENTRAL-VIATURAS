@@ -165,3 +165,12 @@
 - `scope`: `/CENTRAL-VIATURAS/`.
 - Nome curto: `VIATURAS`.
 - Evita qualquer ambiguidade com o PWA COTARP/COTAR, que permanece no caminho `/COTAR/`.
+
+
+## 1.4.9 — 2026-10-01
+
+- Criado manifesto novo e exclusivo `manifest-viaturas-v2.webmanifest`.
+- Novo ID PWA: `/CENTRAL-VIATURAS/viaturas-app-v2`.
+- Start URL exclusivo: `/CENTRAL-VIATURAS/index.html?app=viaturas-v2`.
+- Scope exclusivo: `/CENTRAL-VIATURAS/`.
+- Evita reutilização da identidade instalada do COTARP no Chrome/Windows.
