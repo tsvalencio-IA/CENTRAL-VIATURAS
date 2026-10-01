@@ -39,19 +39,25 @@
     return D.getOSPlate(os,getVehicle())||requestedPlate||'SEMPLACA';
   }
 
+
   function renderPermission(){
     const gestor=D.isManager(session);
+    const official=D.isOfficialClient(os,getClient());
     const el=$('permissionNote');
     const badge=$('permissionBadge');
     if(!el||!badge) return;
     if(gestor){
       badge.textContent='GESTÃO';
       badge.className='permission-badge manager';
-      el.innerHTML='<b>Gestor / gerente / admin:</b> pode controlar execução, compras e informações gerenciais de peças da O.S.';
+      el.innerHTML=official
+        ? '<b>Cliente oficial / Cilia:</b> gestão vê peças e serviços importados do Cilia, compra vinculada, pendências e execução.'
+        : '<b>Cliente normal:</b> gestão vê peças e serviços da O.S., compras vinculadas, pendências e execução.';
     }else{
       badge.textContent='EQUIPE';
       badge.className='permission-badge team';
-      el.innerHTML='<b>Equipe:</b> pode atualizar serviços e itens do checklist. Informações gerenciais confidenciais de peças ficam ocultas neste perfil.';
+      el.innerHTML=official
+        ? '<b>Cliente oficial / Cilia:</b> equipe vê somente as peças do Cilia que precisam ser trocadas. Compra, marca, código, fornecedor e N.F. são confidenciais.'
+        : '<b>Cliente normal:</b> equipe vê somente peças a trocar e serviços a executar. Dados de compra são confidenciais.';
     }
   }
 
@@ -80,33 +86,75 @@
     }));
   }
 
+
   function renderChecklist(){
-    const panel=$('checklistSummaryPanel'),root=$('checklist');
-    if(!D.isManager(session)){
-      if(panel) panel.hidden=true;
-      if(root) root.innerHTML='';
-      return;
-    }
+    const panel=$('checklistSummaryPanel');
+    const root=$('checklist');
+    const mini=$('checkMiniLabel');
+    const compare=$('checklistCompare');
     if(panel) panel.hidden=false;
-    const c=D.checklistSummary(os);
-    if(!c.exists){
-      root.innerHTML='<div class="empty">Ainda não existe checklist anexado nesta O.S.</div>';
-      $('checkProgress').style.width='0%';
-      $('checkLabel').textContent='Sem checklist';
+
+    const summary=D.checklistSummary(os);
+    if(!summary.exists){
+      if(root) root.innerHTML='<div class="empty">Ainda não existe checklist anexado nesta O.S.</div>';
+      if($('checkProgress')) $('checkProgress').style.width='0%';
+      if($('checkLabel')) $('checkLabel').textContent='Sem checklist anexado';
+      if(mini) mini.textContent='SEM CHECKLIST';
+      if(compare){compare.hidden=true;compare.innerHTML='';}
       return;
     }
-    const pct=Math.max(0,Math.min(100,Number(c.progresso??0)));
-    $('checkProgress').style.width=pct+'%';
-    $('checkLabel').textContent=`${pct}% • ${c.pendentes??0} pendente(s)${c.responsavel?' • '+c.responsavel:''}`;
-    if(!c.criticos.length){
-      root.innerHTML='<div class="row"><div class="row-title">Nenhum item crítico/pendente informado no resumo.</div></div>';
-      return;
+
+    const pct=Math.max(0,Math.min(100,Number(summary.progresso??0)));
+    if($('checkProgress')) $('checkProgress').style.width=pct+'%';
+    if($('checkLabel')) $('checkLabel').textContent=pct+'% • '+String(summary.pendentes??0)+' pendente(s)'+(summary.responsavel?' • '+summary.responsavel:'');
+    if(mini) mini.textContent=pct+'% • '+String(summary.responsavel||'equipe');
+
+    const plan=D.checklistPlan(os);
+    const all=[].concat(plan.pecasTrocar||[],plan.servicosExecutar||[],plan.atencoes||[]);
+    if(!all.length){
+      if(root) root.innerHTML='<div class="row"><div class="row-title">Checklist salvo sem itens de ação pendente.</div></div>';
+    }else if(root){
+      root.innerHTML=all.map(function(i){
+        const tipo=i.group==='peca'?'PEÇA / TROCAR':i.group==='servico'?'SERVIÇO':'ATENÇÃO / REVISAR';
+        return '<div class="row">'+
+          '<div class="row-title">'+D.escapeHtml(i.item||i.descricao||'Item')+'</div>'+
+          '<div class="row-meta">'+D.escapeHtml(tipo)+' • '+D.escapeHtml(i.secao||'Checklist')+
+          (i.acaoLabel?' • '+D.escapeHtml(i.acaoLabel):'')+(i.obs?' • '+D.escapeHtml(i.obs):'')+'</div>'+
+        '</div>';
+      }).join('');
     }
-    root.innerHTML=c.criticos.map(i=>`
-      <div class="row">
-        <div class="row-title">${D.escapeHtml(i.item||i.descricao||'Item')}</div>
-        <div class="row-meta">${D.escapeHtml(i.secao||'Checklist')} • ${D.escapeHtml(i.acaoLabel||i.acao||'Atenção')}${i.obs?' • '+D.escapeHtml(i.obs):''}</div>
-      </div>`).join('');
+
+    if(compare){
+      if(!D.isManager(session)){
+        compare.hidden=true;
+        compare.innerHTML='';
+      }else{
+        const cmp=D.compareChecklistToWork(os,getClient());
+        compare.hidden=false;
+        const fonte=cmp.official?'CILIA / O.S.':'O.S.';
+        const list=function(title,items,kind){
+          if(!items.length) return '';
+          return '<div class="check-compare-list"><b>'+D.escapeHtml(title)+'</b>'+
+            items.map(function(x){
+              const text=kind==='match'
+                ? (x.checklist.item+' ↔ '+x.work.descricao)
+                : (kind==='check'?x.item:x.descricao);
+              return '<span>• '+D.escapeHtml(text)+'</span>';
+            }).join('')+
+          '</div>';
+        };
+        compare.innerHTML=
+          '<div class="check-compare-head"><b>COMPARAÇÃO DA GESTÃO</b><span>Checklist x '+D.escapeHtml(fonte)+'</span></div>'+
+          '<div class="check-compare-stats">'+
+            '<span class="state-chip ok">'+cmp.matched.length+' compatível(is)</span>'+
+            '<span class="state-chip warn">'+cmp.checklistOnly.length+' só no checklist</span>'+
+            '<span class="state-chip">'+cmp.workOnly.length+' só na '+D.escapeHtml(fonte)+'</span>'+
+          '</div>'+
+          list('Encontrado nos dois',cmp.matched,'match')+
+          list('Somente no checklist — revisar antes de executar',cmp.checklistOnly,'check')+
+          list('Somente na '+fonte,cmp.workOnly,'work');
+      }
+    }
   }
 
 
@@ -128,198 +176,206 @@
     '</section>';
   }
 
-  function renderOSService(item){
-    const execStatus=String(item.execucao?.status||'pendente');
-    const done=D.executionFinished(execStatus);
-    const disabled=item.approvalExists&&!item.aprovado;
-    return '<article class="op-row '+(done?'is-done ':'')+(disabled?'is-disabled':'')+'">'+
-      '<div class="op-main">'+
-        '<div class="op-type">SERVIÇO DA O.S.</div>'+
-        '<div class="op-title">'+D.escapeHtml(item.descricao||item.codigo||item.key)+'</div>'+
-        '<div class="op-meta">'+(item.codigo?'Cód. '+D.escapeHtml(item.codigo)+' • ':'')+'Serviço cadastrado na O.S.</div>'+
-        '<div class="op-statuses">'+
-          (disabled?'<span class="state-chip warn">NÃO APROVADO</span>':(item.approvalExists?'<span class="state-chip ok">APROVADO</span>':''))+
-          (done?'<span class="state-chip ok">EXECUTADO</span>':'<span class="state-chip">PENDENTE</span>')+
-        '</div>'+
-        (item.execucao?.atualizadoPor?'<div class="op-audit">Atualizado por '+D.escapeHtml(item.execucao.atualizadoPor)+(item.execucao.atualizadoEm?' • '+D.escapeHtml(D.fmt(item.execucao.atualizadoEm)):'')+'</div>':'')+
-      '</div>'+
-      '<div class="op-actions"><button class="btn '+(done?'success':'primary')+'" data-exec-key="'+D.escapeHtml(item.key)+'" data-done="'+(done?'1':'0')+'" '+(disabled?'disabled title="Item não aprovado"':'')+'>'+(done?'REABRIR':'MARCAR EXECUTADO')+'</button></div>'+
-    '</article>';
+
+  function normalizedWorkStatus(item){
+    const raw=String(D.workExecution(os,item.key)?.status||item.execucao?.status||'pendente').toLowerCase();
+    if(D.executionFinished(raw)||raw==='concluido') return 'concluido';
+    if(raw==='em_execucao'||raw==='andamento'||raw==='em andamento') return 'em_execucao';
+    if(raw==='impedido'||raw==='nao_resolveu'||raw==='não resolveu'||raw==='bloqueado') return 'impedido';
+    return 'pendente';
   }
 
-  function renderChecklistItem(item){
-    const state=D.checklistExecution(os,item.key);
-    const status=String(state.status||'pendente');
-    const done=D.executionFinished(status)||status==='resolvido';
+  function workStatusLabel(status){
+    return status==='concluido'?'CONCLUÍDO':status==='em_execucao'?'EM EXECUÇÃO':status==='impedido'?'IMPEDIDO / NÃO RESOLVEU':'PENDENTE';
+  }
+
+  function renderWorkItem(item){
     const gestor=D.isManager(session);
-    const purchase=gestor?D.checklistPurchase(os,item.key):{};
-    const bought=gestor&&purchase?.comprado===true;
-    const label=item.group==='peca'?'PEÇA A TROCAR':item.group==='servico'?'SERVIÇO A FAZER':'ATENÇÃO / OBSERVAR';
-    const doneLabel=item.group==='peca'?(gestor?'TROCADA':'CONCLUÍDA'):item.group==='servico'?'EXECUTADO':'RESOLVIDO';
-    const actionLabel=item.group==='peca'?(gestor?'MARCAR TROCADA':'MARCAR CONCLUÍDA'):item.group==='servico'?'MARCAR EXECUTADO':'MARCAR RESOLVIDO';
-    const buyButton=item.group==='peca'&&gestor
-      ? '<button class="btn '+(bought?'':'purchase')+'" data-check-buy-key="'+D.escapeHtml(item.key)+'" data-bought="'+(bought?'1':'0')+'">'+(bought?'DESMARCAR COMPRA':'MARCAR COMPRADA')+'</button>'
+    const state=D.workExecution(os,item.key);
+    const status=normalizedWorkStatus(item);
+    const purchase=item.tipo==='peca'&&gestor?D.workPurchase(os,item.key):null;
+    const meta=[];
+    if(gestor){
+      if(item.origem) meta.push(item.origem);
+      if(item.codigo) meta.push('Cód. '+item.codigo);
+      if(item.marca) meta.push('Marca '+item.marca);
+      if(item.ciliaPieceIndex) meta.push('Cilia #'+item.ciliaPieceIndex);
+    }
+    const purchaseChips=gestor&&item.tipo==='peca'
+      ? (purchase.comprado
+          ? '<span class="state-chip bought">'+(purchase.linked?'COMPRADA / VINCULADA':'COMPRADA')+'</span>'
+          : '<span class="state-chip warn">FALTA COMPRAR</span>')
       : '';
-    return '<article class="op-row '+(done?'is-done':'')+'">'+
+    const statusClass=status==='concluido'?'ok':status==='impedido'?'warn':'';
+    const obs=String(state?.obs||'');
+    const buyButton=gestor&&item.tipo==='peca'
+      ? '<button class="btn purchase" data-work-buy="'+D.escapeHtml(item.key)+'" data-bought="'+(purchase.comprado?'1':'0')+'">'+
+          (purchase.comprado?'DESMARCAR COMPRA':'MARCAR COMPRADA')+'</button>'
+      : '';
+
+    return '<article class="op-row work-item '+(status==='concluido'?'is-done ':'')+(status==='impedido'?'is-blocked ':'')+'" data-work-card="'+D.escapeHtml(item.key)+'">'+
       '<div class="op-main">'+
-        '<div class="op-type">'+label+'</div>'+
-        '<div class="op-title">'+D.escapeHtml(item.item||'Item')+'</div>'+
-        '<div class="op-meta">'+D.escapeHtml(item.secao||'Checklist')+(item.acaoLabel?' • '+D.escapeHtml(item.acaoLabel):'')+(item.obs?' • '+D.escapeHtml(item.obs):'')+'</div>'+
-        '<div class="op-statuses">'+
-          (done?'<span class="state-chip ok">'+doneLabel+'</span>':'<span class="state-chip">PENDENTE</span>')+
-          (item.group==='peca'&&gestor?(bought?'<span class="state-chip bought">COMPRADA</span>':'<span class="state-chip">COMPRA PENDENTE</span>'):'')+
-        '</div>'+
-        (state?.atualizadoPor?'<div class="op-audit">Execução: '+D.escapeHtml(state.atualizadoPor)+(state.atualizadoEm?' • '+D.escapeHtml(D.fmt(state.atualizadoEm)):'')+'</div>':'')+
-        (gestor&&purchase?.compradoPor?'<div class="op-audit">Compra: '+D.escapeHtml(purchase.compradoPor)+(purchase.compradoEm?' • '+D.escapeHtml(D.fmt(purchase.compradoEm)):'')+'</div>':'')+
+        '<div class="op-type">'+D.escapeHtml(item.tipo==='peca'?'PEÇA A TROCAR':'SERVIÇO A EXECUTAR')+'</div>'+
+        '<div class="op-title">'+D.escapeHtml(item.descricao||item.codigo||item.key)+'</div>'+
+        (gestor&&meta.length?'<div class="op-meta">'+D.escapeHtml(meta.join(' • '))+'</div>':'')+
+        '<div class="op-statuses"><span class="state-chip '+statusClass+'">'+workStatusLabel(status)+'</span>'+purchaseChips+'</div>'+
+        (state?.atualizadoPor?'<div class="op-audit">Última atualização: '+D.escapeHtml(state.atualizadoPor)+(state.atualizadoEm?' • '+D.escapeHtml(D.fmt(state.atualizadoEm)):'')+'</div>':'')+
+        '<input class="work-obs" data-work-obs="'+D.escapeHtml(item.key)+'" maxlength="500" value="'+D.escapeHtml(obs)+'" placeholder="Observação: ex. fiz, mas não resolveu / aguardando peça...">'+
       '</div>'+
-      '<div class="op-actions">'+
-        '<button class="btn '+(done?'success':'primary')+'" data-check-exec-key="'+D.escapeHtml(item.key)+'" data-done="'+(done?'1':'0')+'">'+(done?'REABRIR':actionLabel)+'</button>'+
+      '<div class="op-actions work-actions">'+
+        (status==='concluido'
+          ? '<button class="btn success" data-work-status="pendente" data-work-key="'+D.escapeHtml(item.key)+'">REABRIR</button>'
+          : '<button class="btn" data-work-status="em_execucao" data-work-key="'+D.escapeHtml(item.key)+'">EM EXECUÇÃO</button>'+
+            '<button class="btn primary" data-work-status="concluido" data-work-key="'+D.escapeHtml(item.key)+'">CONCLUIR</button>'+
+            '<button class="btn danger" data-work-status="impedido" data-work-key="'+D.escapeHtml(item.key)+'">IMPEDIDO</button>')+
         buyButton+
       '</div>'+
     '</article>';
   }
 
-  function managerPendingSummary(pendingOS,pp,ps,pa){
-    const total=pendingOS.length+pp.pending.length+ps.pending.length+pa.pending.length;
-    const bought=pp.pending.filter(x=>D.checklistPurchase(os,x.key)?.comprado===true).length;
-    const buyPending=Math.max(0,pp.pending.length-bought);
+  function managerPendingSummary(plan,visibleServices){
+    const items=[].concat(plan.pieces,visibleServices);
+    const pending=items.filter(function(x){return normalizedWorkStatus(x)!=='concluido';});
+    const blocked=items.filter(function(x){return normalizedWorkStatus(x)==='impedido';});
+    const needBuy=plan.pieces.filter(function(x){return !D.workPurchase(os,x.key).comprado;});
+    const boughtWaiting=plan.pieces.filter(function(x){return D.workPurchase(os,x.key).comprado&&normalizedWorkStatus(x)!=='concluido';});
     return '<div class="management-pending">'+
-      '<div class="management-pending-title"><b>O QUE AINDA FALTA FAZER</b><span>'+total+' pendência(s)</span></div>'+
+      '<div class="management-pending-title"><b>CONTROLE PARA NÃO ESQUECER NADA</b><span>'+pending.length+' execução(ões) pendente(s)</span></div>'+
       '<div class="management-pending-grid">'+
-        '<div><b>'+pendingOS.length+'</b><span>serviços da O.S.</span></div>'+
-        '<div><b>'+pp.pending.length+'</b><span>peças a trocar</span></div>'+
-        '<div><b>'+ps.pending.length+'</b><span>serviços do checklist</span></div>'+
-        '<div><b>'+pa.pending.length+'</b><span>atenções</span></div>'+
-        '<div><b>'+buyPending+'</b><span>peças com compra pendente</span></div>'+
+        '<div><b>'+pending.length+'</b><span>o que falta fazer</span></div>'+
+        '<div><b>'+needBuy.length+'</b><span>o que falta comprar</span></div>'+
+        '<div><b>'+boughtWaiting.length+'</b><span>comprado / aguardando execução</span></div>'+
+        '<div><b>'+blocked.length+'</b><span>impedimentos / não resolveu</span></div>'+
+        '<div><b>'+plan.pieces.length+'</b><span>peças controladas</span></div>'+
       '</div>'+
     '</div>';
+  }
+
+  function splitWork(items){
+    return {
+      pending:items.filter(function(x){const s=normalizedWorkStatus(x);return s!=='concluido'&&s!=='impedido';}),
+      blocked:items.filter(function(x){return normalizedWorkStatus(x)==='impedido';}),
+      done:items.filter(function(x){return normalizedWorkStatus(x)==='concluido';})
+    };
   }
 
   function renderOperational(){
     renderPermission();
     const root=$('operationalItems');
     const gestor=D.isManager(session);
-    const osServices=D.operationalItems(os).filter(x=>x.tipo==='servico');
-    const pendingOS=osServices.filter(x=>!D.executionFinished(String(x.execucao?.status||'pendente')));
-    const doneOS=osServices.filter(x=>D.executionFinished(String(x.execucao?.status||'pendente')));
+    const plan=D.workPlan(os,getClient());
+    const visibleServices=gestor?plan.services:(plan.official?[]:plan.services);
+    const pp=splitWork(plan.pieces);
+    const ss=splitWork(visibleServices);
+    const blocked=[].concat(pp.blocked,ss.blocked);
+    const completed=[].concat(pp.done,ss.done);
 
-    const plan=D.checklistPlan(os);
-    const split=(arr)=>({
-      pending:arr.filter(x=>{
-        const s=String(D.checklistExecution(os,x.key)?.status||'pendente');
-        return !(D.executionFinished(s)||s==='resolvido');
-      }),
-      done:arr.filter(x=>{
-        const s=String(D.checklistExecution(os,x.key)?.status||'pendente');
-        return D.executionFinished(s)||s==='resolvido';
-      })
-    });
-    const pp=split(plan.pecasTrocar), ps=split(plan.servicosExecutar), pa=split(plan.atencoes);
+    let html='';
+    if(gestor) html+=managerPendingSummary(plan,visibleServices);
 
-    if(gestor){
-      const completed=[...doneOS,...pp.done,...ps.done,...pa.done];
-      root.innerHTML=
-        managerPendingSummary(pendingOS,pp,ps,pa)+
-        opGroup('os-services','SERVIÇOS DA O.S.','Serviços cadastrados na própria ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente da O.S.')+
-        opGroup('check-parts','PEÇAS A TROCAR — CHECKLIST','Itens marcados como Trocar no CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça marcada para troca no checklist.')+
-        opGroup('check-services','SERVIÇOS A EXECUTAR — CHECKLIST','Retificar, regular, ajustar, lubrificar ou limpar',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente do checklist.')+
-        opGroup('check-attention','ATENÇÕES / OBSERVAR — CHECKLIST','Itens marcados como Atenção ou Revisar',pa.pending,renderChecklistItem,'Nenhum item de atenção pendente.')+
-        opGroup('completed','CONCLUÍDOS / EXECUTADOS','Itens concluídos saem das pendências e ficam aqui',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+    if(plan.official){
+      html+=opGroup(
+        'work-parts',
+        gestor?'PEÇAS CILIA A TROCAR':'PEÇAS A TROCAR',
+        gestor?'Peças importadas do Cilia que estão na O.S.':'Somente peças importadas do Cilia que precisam ser executadas',
+        pp.pending,renderWorkItem,'Nenhuma peça pendente.'
+      );
+      if(gestor){
+        html+=opGroup(
+          'work-services',
+          'SERVIÇOS CILIA A EXECUTAR',
+          'Serviços do Cilia relacionados à O.S.',
+          ss.pending,renderWorkItem,'Nenhum serviço Cilia pendente.'
+        );
+      }
     }else{
-      // Equipe vê somente o necessário para executar o trabalho.
-      const completed=[...doneOS,...pp.done,...ps.done];
-      root.innerHTML=
-        opGroup('os-services','SERVIÇOS A FAZER','Serviços da ordem de serviço',pendingOS,renderOSService,'Nenhum serviço pendente.')+
-        opGroup('check-parts','PEÇAS A TROCAR','Peças indicadas pelo CHECKLIS_SOS',pp.pending,renderChecklistItem,'Nenhuma peça pendente de troca.')+
-        opGroup('check-services','SERVIÇOS DO CHECKLIST','Serviços técnicos indicados pelo CHECKLIS_SOS',ps.pending,renderChecklistItem,'Nenhum serviço técnico pendente.')+
-        opGroup('completed','CONCLUÍDOS','Itens já concluídos pela equipe',completed,(item)=>item.group?renderChecklistItem(item):renderOSService(item),'Nenhum item concluído ainda.');
+      html+=opGroup('work-parts','PEÇAS A TROCAR','Peças da O.S. que precisam ser executadas',pp.pending,renderWorkItem,'Nenhuma peça pendente.');
+      html+=opGroup('work-services','SERVIÇOS A EXECUTAR','Serviços da O.S. que precisam ser executados',ss.pending,renderWorkItem,'Nenhum serviço pendente.');
     }
 
-    root.querySelectorAll('[data-collapse-group]').forEach(btn=>btn.addEventListener('click',()=>{
-      const id=btn.dataset.collapseGroup;
-      setCollapsed(id,!isCollapsed(id));
-      renderOperational();
-    }));
+    html+=opGroup(
+      'work-blocked',
+      'IMPEDIMENTOS / NÃO RESOLVEU',
+      'Itens que precisam de atenção antes de considerar a viatura concluída',
+      blocked,renderWorkItem,'Nenhum impedimento informado.'
+    );
+    html+=opGroup(
+      'work-completed',
+      'CONCLUÍDOS',
+      'Itens retirados das pendências após a execução',
+      completed,renderWorkItem,'Nenhum item concluído ainda.'
+    );
+    root.innerHTML=html;
 
-    root.querySelectorAll('[data-exec-key]').forEach(btn=>btn.addEventListener('click',async()=>{
-      const done=btn.dataset.done==='1';
-      btn.disabled=true;
-      try{
-        await D.setExecutionState(db,session,os.id,btn.dataset.execKey,!done);
-        toast(done?'Serviço reaberto.':'Serviço marcado como executado.','ok');
-      }catch(e){ toast(e.message||'Não foi possível atualizar a execução.','err'); }
-      finally{ btn.disabled=false; }
-    }));
+    root.querySelectorAll('[data-collapse-group]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        const id=btn.dataset.collapseGroup;
+        setCollapsed(id,!isCollapsed(id));
+        renderOperational();
+      });
+    });
 
-    root.querySelectorAll('[data-check-exec-key]').forEach(btn=>btn.addEventListener('click',async()=>{
-      const done=btn.dataset.done==='1';
-      btn.disabled=true;
-      try{
-        const r=await D.setChecklistExecutionState(db,session,os.id,btn.dataset.checkExecKey,!done);
-        const manager=D.isManager(session);
-        const msg=r?.item?.group==='peca'
-          ? (done?'Item reaberto.':(manager?'Controle da peça atualizado.':'Peça concluída.'))
-          : r?.item?.group==='atencao'
-            ? (done?'Atenção reaberta.':'Atenção marcada como resolvida.')
-            : (done?'Serviço reaberto.':'Serviço executado.');
-        toast(msg,'ok');
-      }catch(e){ toast(e.message||'Não foi possível atualizar o checklist.','err'); }
-      finally{ btn.disabled=false; }
-    }));
+    root.querySelectorAll('[data-work-status]').forEach(function(btn){
+      btn.addEventListener('click',async function(){
+        const key=btn.dataset.workKey;
+        const status=btn.dataset.workStatus;
+        const card=btn.closest('[data-work-card]');
+        const obs=card?.querySelector('[data-work-obs]')?.value?.trim()||'';
+        if(status==='impedido'&&!obs){
+          toast('Para marcar IMPEDIDO, escreva o que aconteceu na observação.','err');
+          card?.querySelector('[data-work-obs]')?.focus();
+          return;
+        }
+        btn.disabled=true;
+        try{
+          await D.setWorkState(db,session,os.id,key,status,obs,getClient());
+          toast(status==='concluido'?'Item concluído.':status==='impedido'?'Impedimento registrado.':status==='em_execucao'?'Item em execução.':'Item reaberto.','ok');
+        }catch(e){toast(e.message||'Não foi possível atualizar o item.','err');}
+        finally{btn.disabled=false;}
+      });
+    });
 
-    root.querySelectorAll('[data-check-buy-key]').forEach(btn=>btn.addEventListener('click',async()=>{
-      const bought=btn.dataset.bought==='1';
-      btn.disabled=true;
-      try{
-        await D.setChecklistPurchaseState(db,session,os.id,btn.dataset.checkBuyKey,!bought);
-        toast(bought?'Compra reaberta.':'Peça marcada como comprada.','ok');
-      }catch(e){ toast(e.message||'Não foi possível atualizar a compra.','err'); }
-      finally{ btn.disabled=false; }
-    }));
+    root.querySelectorAll('[data-work-buy]').forEach(function(btn){
+      btn.addEventListener('click',async function(){
+        const bought=btn.dataset.bought==='1';
+        btn.disabled=true;
+        try{
+          await D.setPurchaseState(db,session,os.id,btn.dataset.workBuy,!bought);
+          toast(bought?'Compra reaberta.':'Peça marcada como comprada.','ok');
+        }catch(e){toast(e.message||'Não foi possível atualizar a compra.','err');}
+        finally{btn.disabled=false;}
+      });
+    });
   }
+
 
   function printOperational(){
-    const plan=D.checklistPlan(os);
-    const osServices=D.operationalItems(os).filter(x=>x.tipo==='servico');
-    const real=D.osPieces(os);
-    const rows=(title,items,kind)=> {
-      const body=items.map(item=>{
-        let desc='',meta='',status='';
-        if(kind==='os'){
-          desc=item.descricao||'Serviço';
-          meta='Serviço da O.S.';
-          status=D.executionFinished(String(item.execucao?.status||''))?'EXECUTADO':'PENDENTE';
-        }else if(kind==='real'){
-          desc=item.descricao||item.codigo||'Peça';
-          meta='Peça realmente trocada';
-          status='TROCADA';
-        }else{
-          desc=item.item||'Item';
-          meta=(item.secao||'Checklist')+(item.acaoLabel?' • '+item.acaoLabel:'');
-          const st=String(D.checklistExecution(os,item.key)?.status||'pendente');
-          status=D.executionFinished(st)||st==='resolvido'?(item.group==='peca'?'TROCADA':item.group==='atencao'?'RESOLVIDO':'EXECUTADO'):'PENDENTE';
-          if(item.group==='peca' && D.checklistPurchase(os,item.key)?.comprado) status+=' • COMPRADA';
-        }
-        return '<tr><td>'+D.escapeHtml(desc)+'</td><td>'+D.escapeHtml(meta)+'</td><td>'+D.escapeHtml(status)+'</td></tr>';
-      }).join('');
-      return '<h2>'+D.escapeHtml(title)+'</h2><table><thead><tr><th>Item</th><th>Origem / ação</th><th>Status</th></tr></thead><tbody>'+(body||'<tr><td colspan="3">Nenhum item</td></tr>')+'</tbody></table>';
-    };
+    const gestor=D.isManager(session);
+    const plan=D.workPlan(os,getClient());
+    const services=gestor?plan.services:(plan.official?[]:plan.services);
+    const items=[].concat(plan.pieces,services);
+    const body=items.map(function(item){
+      const st=normalizedWorkStatus(item);
+      const purchase=gestor&&item.tipo==='peca'?D.workPurchase(os,item.key):null;
+      const meta=gestor
+        ? [item.origem,item.codigo?('Cód. '+item.codigo):'',item.marca?('Marca '+item.marca):'',purchase?.comprado?'COMPRADA':''].filter(Boolean).join(' • ')
+        : '';
+      return '<tr><td>'+D.escapeHtml(item.descricao)+'</td><td>'+D.escapeHtml(item.tipo==='peca'?'PEÇA':'SERVIÇO')+'</td><td>'+
+        D.escapeHtml(workStatusLabel(st))+'</td><td>'+D.escapeHtml(meta)+'</td></tr>';
+    }).join('');
 
     const w=window.open('','_blank');
-    if(!w){ toast('O navegador bloqueou a janela de impressão.','err'); return; }
-    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Relatório operacional '+D.escapeHtml(currentPlate())+'</title><style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;color:#111;font-size:11px}h1{font-size:20px;margin:0 0 4px}h2{font-size:13px;margin:16px 0 5px}p{margin:2px 0 10px;color:#444}table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #bbb;padding:5px;text-align:left;vertical-align:top}th{background:#eee}.footer{margin-top:18px;text-align:center;font-size:9px;color:#666}</style></head><body>'+
+    if(!w){toast('O navegador bloqueou a janela de impressão.','err');return;}
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Relatório operacional '+D.escapeHtml(currentPlate())+
+      '</title><style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;color:#111;font-size:11px}h1{font-size:20px;margin:0 0 4px}p{margin:2px 0 10px;color:#444}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #bbb;padding:5px;text-align:left;vertical-align:top}th{background:#eee}.footer{margin-top:18px;text-align:center;font-size:9px;color:#666}</style></head><body>'+
       '<h1>RELATÓRIO OPERACIONAL DA VIATURA '+D.escapeHtml(currentPlate())+'</h1>'+
-      '<p>O.S. '+D.escapeHtml(D.getOSNumber(os)||os.id)+' • '+D.escapeHtml(D.getVehicleLabel(os,getVehicle()))+' • Impresso em '+D.escapeHtml(new Date().toLocaleString('pt-BR'))+'</p>'+
-      rows('SERVIÇOS DA O.S.',osServices,'os')+
-      rows('PEÇAS A TROCAR — CHECKLIST',plan.pecasTrocar,'check')+
-      rows('SERVIÇOS A EXECUTAR — CHECKLIST',plan.servicosExecutar,'check')+
-      (D.isManager(session)?rows('ATENÇÕES / OBSERVAR — CHECKLIST',plan.atencoes,'check'):'')+
-      (D.isManager(session)?rows('CONTROLE GERENCIAL DE PEÇAS',real,'real'):'')+
+      '<p>O.S. '+D.escapeHtml(D.getOSNumber(os)||os.id)+' • '+D.escapeHtml(D.getVehicleLabel(os,getVehicle()))+' • '+(plan.official?'CLIENTE OFICIAL / CILIA':'CLIENTE NORMAL')+'</p>'+
+      '<table><thead><tr><th>Item</th><th>Tipo</th><th>Status</th><th>'+(gestor?'Gestão':'')+'</th></tr></thead><tbody>'+
+      (body||'<tr><td colspan="4">Nenhum item operacional.</td></tr>')+'</tbody></table>'+
       '<div class="footer">Powered by thIAguinho Soluções Digitais</div></body></html>');
     w.document.close();
-    setTimeout(()=>w.print(),250);
+    setTimeout(function(){w.print();},250);
   }
-
 
   function renderPieces(){
     const panel=$('realPartsPanel');
@@ -342,20 +398,81 @@
       </div>`).join('');
   }
 
+
   function renderNF(){
     const panel=$('managerNfPanel'),root=$('purchased');
-    if(!D.isManager(session)){ if(panel) panel.hidden=true; if(root) root.innerHTML=''; return; }
-    if(panel) panel.hidden=false;
+    if(!D.isManager(session)){if(panel)panel.hidden=true;if(root)root.innerHTML='';return;}
+    if(panel)panel.hidden=false;
+
+    const plan=D.workPlan(os,getClient());
+    const pieces=plan.pieces||[];
+    const links=os?.centralCompraVinculos||{};
+    const reverse={};
+    Object.keys(links).forEach(function(key){
+      const id=String(links[key]?.nfVinculoId||'');
+      if(id) reverse[id]=key;
+    });
+
     if(!extras.nf.length){
-      root.innerHTML='<div class="empty">Nenhum vínculo de nota/peça acessível para esta O.S. neste perfil.</div>';
+      root.innerHTML='<div class="empty">Nenhuma peça comprada/N.F. vinculada a esta O.S. foi encontrada.</div>';
       return;
     }
-    root.innerHTML=extras.nf.map(p=>`
-      <div class="row">
-        <div class="row-title">${D.escapeHtml(p.descricao||p.codigo)}</div>
-        <div class="row-meta">${p.codigo?'Cód. '+D.escapeHtml(p.codigo)+' • ':''}Qtd. ${D.escapeHtml(p.qtd||'-')}${p.fornecedor?' • '+D.escapeHtml(p.fornecedor):''}${p.nfNumero?' • NF '+D.escapeHtml(p.nfNumero):''}${p.finalidade?' • '+D.escapeHtml(p.finalidade):''}</div>
-      </div>`).join('');
+
+    root.innerHTML=extras.nf.map(function(p){
+      const linkedKey=reverse[p.id]||'';
+      const suggested=linkedKey||D.suggestPurchaseTarget(p,pieces);
+      const options='<option value="">ESCOLHA A PEÇA DA O.S.</option>'+
+        pieces.map(function(item){
+          return '<option value="'+D.escapeHtml(item.key)+'" '+(suggested===item.key?'selected':'')+'>'+
+            D.escapeHtml(item.descricao)+(item.codigo?' — '+D.escapeHtml(item.codigo):'')+
+          '</option>';
+        }).join('');
+      const linked=linkedKey?pieces.find(function(x){return x.key===linkedKey;}):null;
+      return '<div class="row purchase-link-row" data-purchase-id="'+D.escapeHtml(p.id)+'">'+
+        '<div class="row-title">'+D.escapeHtml(p.descricao||p.codigo)+'</div>'+
+        '<div class="row-meta">'+
+          (p.codigo?'Cód. '+D.escapeHtml(p.codigo)+' • ':'')+
+          (p.marca?'Marca '+D.escapeHtml(p.marca)+' • ':'')+
+          'Qtd. '+D.escapeHtml(p.qtd||'-')+
+          (p.fornecedor?' • '+D.escapeHtml(p.fornecedor):'')+
+          (p.nfNumero?' • NF '+D.escapeHtml(p.nfNumero):'')+
+        '</div>'+
+        (linked?'<div class="purchase-linked">VINCULADA → '+D.escapeHtml(linked.descricao)+'</div>':'')+
+        '<div class="purchase-link-controls"><select class="search" data-purchase-target="'+D.escapeHtml(p.id)+'">'+options+'</select>'+
+          '<button class="btn purchase" data-link-purchase="'+D.escapeHtml(p.id)+'">VINCULAR / DAR BAIXA</button>'+
+          (linked?'<button class="btn danger" data-unlink-purchase="'+D.escapeHtml(p.id)+'" data-work-key="'+D.escapeHtml(linkedKey)+'">REMOVER VÍNCULO</button>':'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    root.querySelectorAll('[data-link-purchase]').forEach(function(btn){
+      btn.addEventListener('click',async function(){
+        const id=btn.dataset.linkPurchase;
+        const p=extras.nf.find(function(x){return String(x.id)===String(id);});
+        const select=root.querySelector('[data-purchase-target="'+CSS.escape(id)+'"]');
+        const key=select?.value||'';
+        if(!p||!key){toast('Escolha a peça da O.S. que corresponde a esta compra.','err');return;}
+        btn.disabled=true;
+        try{
+          await D.linkPurchaseToWorkItem(db,session,os.id,key,p);
+          toast('Compra vinculada à peça da O.S.','ok');
+        }catch(e){toast(e.message||'Não foi possível vincular.','err');}
+        finally{btn.disabled=false;}
+      });
+    });
+
+    root.querySelectorAll('[data-unlink-purchase]').forEach(function(btn){
+      btn.addEventListener('click',async function(){
+        btn.disabled=true;
+        try{
+          await D.linkPurchaseToWorkItem(db,session,os.id,btn.dataset.workKey,null);
+          toast('Vínculo de compra removido.','ok');
+        }catch(e){toast(e.message||'Não foi possível remover o vínculo.','err');}
+        finally{btn.disabled=false;}
+      });
+    });
   }
+
 
   function renderCotacoes(){
     const panel=$('managerQuotesPanel'),root=$('quotes');
@@ -388,7 +505,10 @@
       concluiu_item_checklist:'Item do checklist concluído',
       reabriu_item_checklist:'Item do checklist reaberto',
       marcou_peca_checklist_comprada:'Peça do checklist marcada como comprada',
-      reabriu_compra_peca_checklist:'Compra do checklist reaberta'
+      reabriu_compra_peca_checklist:'Compra do checklist reaberta',
+      alterou_status_item:'Fila operacional atualizada',
+      vinculou_compra_os:'Compra vinculada à O.S.',
+      removeu_vinculo_compra_os:'Vínculo de compra removido'
     };
     return map[a]||'Atualização da Central';
   }
@@ -399,7 +519,7 @@
     const report=D.reportEvents(os).filter(e=>{
       if(manager) return true;
       const a=String(e?.acao||'');
-      if(['registrou_peca_real_trocada','marcou_peca_trocada','marcou_peca_comprada','desmarcou_peca_comprada','marcou_peca_checklist_comprada','reabriu_compra_peca_checklist'].includes(a)) return false;
+      if(['registrou_peca_real_trocada','marcou_peca_trocada','marcou_peca_comprada','desmarcou_peca_comprada','marcou_peca_checklist_comprada','reabriu_compra_peca_checklist','vinculou_compra_os','removeu_vinculo_compra_os'].includes(a)) return false;
       return true;
     });
     report.forEach(e=>ev.push({
