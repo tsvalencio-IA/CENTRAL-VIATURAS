@@ -174,3 +174,14 @@
 - Start URL exclusivo: `/CENTRAL-VIATURAS/index.html?app=viaturas-v2`.
 - Scope exclusivo: `/CENTRAL-VIATURAS/`.
 - Evita reutilização da identidade instalada do COTARP no Chrome/Windows.
+
+
+## 1.4.10 — 2026-10-01
+
+- Alteração restrita à CENTRAL-VIATURAS, partindo da V1.4.9 estável.
+- Todos os painéis principais da tela da viatura passam a ter MINIMIZAR / MAXIMIZAR, com preferência gravada no aparelho.
+- Todos os blocos operacionais continuam minimizáveis individualmente.
+- O bloco CONCLUÍDOS fica no final e inicia minimizado; ao executar/trocar um item ele sai das pendências e vai para esse histórico automaticamente.
+- Criado resumo FOCO AGORA para a equipe, mostrando quantos serviços da O.S., peças do checklist e serviços do checklist ainda estão pendentes.
+- Origens ficaram visualmente e textualmente separadas: O.S., CHECKLIST — PEÇAS, CHECKLIST — SERVIÇOS, CHECKLIST — ATENÇÕES e CONCLUÍDOS.
+- Nenhuma lógica do Firebase, checklist, SAAS-2 ou COTARP foi alterada nesta versão.
