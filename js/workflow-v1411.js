@@ -50,7 +50,7 @@
   function workStatus(os,key){ return clean(workState(os,key)?.status||'pendente').toLowerCase(); }
   function doneStatus(status){ return /^(executado|executado_obs|executado_com_observacao|concluido|finalizado|feito|realizado|trocada|resolvido)$/i.test(clean(status)); }
   function blockedStatus(status){ return /^(impedido|nao_resolveu|não_resolveu|bloqueado)$/i.test(clean(status)); }
-  function inProgressStatus(status){ return /^(em_execucao|em execução|em_execuçã|iniciado)$/i.test(clean(status)); }
+  function inProgressStatus(status){ return /^(em_execucao|em execução|em_execução|iniciado)$/i.test(clean(status)); }
   function statusLabel(status,tipo){
     if(doneStatus(status)) return tipo==='peca'?'TROCADA':'EXECUTADO';
     if(blockedStatus(status)) return 'IMPEDIDO / NÃO RESOLVEU';
@@ -71,7 +71,7 @@
     const official=isOfficialClient(os,client);
     const manager=D.isManager(session);
     const pieces=(Array.isArray(os?.pecas)?os.pecas:[]).map((p,index)=>({
-      key:`peca-${index}`,index,tipo:'peca',descricao:pieceDescription(p),codigo:pieceCode(p),qtd:p?.qtd??p?.q??p?.quantidade??1,
+      key:`peca-${index}`,index,tipo:'peca',descricao:pieceDescription(p),codigo:pieceCode(p),marca:clean(p?.marca||p?.fabricante||''),qtd:p?.qtd??p?.q??p?.quantidade??1,
       source:isCiliaPiece(p)?'CILIA':'O.S.',cilia:isCiliaPiece(p),raw:p,state:workState(os,`peca-${index}`)
     })).filter(x=>x.descricao||x.codigo).filter(x=>!isNFPurchaseOnlyPiece(x.raw)).filter(x=>isApproved(os,x.key));
 
