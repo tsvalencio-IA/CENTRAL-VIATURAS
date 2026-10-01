@@ -2,7 +2,7 @@
   "id": "/CENTRAL-VIATURAS/viaturas-app-v2",
   "name": "Valêncio SOS — Acompanhamento",
   "short_name": "Valêncio SOS",
-  "description": "Acompanhamento operacional de veículos da S.O.S. Valêncio integrado à oficina.",
+  "description": "Acompanhamento operacional dos veículos da oficina, com fila de execução e controle gerencial.",
   "start_url": "/CENTRAL-VIATURAS/index.html?app=viaturas-v2",
   "scope": "/CENTRAL-VIATURAS/",
   "display": "standalone",
