@@ -53,6 +53,7 @@
     Object.values(os?.centralComprasItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt||x?.compradoEm));
     Object.values(os?.centralChecklistExecucaoItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt));
     Object.values(os?.centralChecklistComprasItens||{}).forEach(x=>vals.push(x?.atualizadoEm||x?.updatedAt||x?.compradoEm));
+    Object.values(os?.centralCompraVinculos||{}).forEach(x=>vals.push(x?.vinculadoEm||x?.atualizadoEm));
     vals.push(os?.checklistOperacionalAtualizadoEm);
     return Math.max(0,...vals.map(ts));
   }
@@ -274,59 +275,168 @@
     return getRealParts(os).filter(isTrulyInstalledRealPart);
   }
 
-  function operationalItems(os){
+
+  function hasCiliaIndex(v){
+    return v!==undefined && v!==null && String(v).trim()!=='';
+  }
+
+  function isOfficialClient(os,client){
+    const raw=norm(
+      client?.tipoCliente||client?.tipo||client?.categoria||
+      os?.tipoCliente||os?.clienteTipo||os?.clienteCategoria||
+      os?.clienteSnapshot?.tipoCliente||os?.clienteSnapshot?.tipo||''
+    ).replace(/\s+/g,'_');
+    return raw==='governo' || raw==='oficial' || raw==='cliente_oficial' ||
+      raw==='publico' || raw==='publica' || raw.includes('govern') ||
+      raw.includes('orgao_public') || raw.includes('cliente_oficial');
+  }
+
+  function itemRemoved(item){
+    const st=norm(item?.status||item?.situacao||item?.situação||item?.estado||'');
+    return item?.excluido===true||item?.excluida===true||item?.removido===true||item?.removida===true||
+      /(excluid|removid|cancelad)/.test(st);
+  }
+
+  function workItemsAll(os){
     const keys=approvedKeys(os);
     const approvalExists=hasApproval(os);
     const exec=os?.execucaoItens||{};
     const buys=os?.centralComprasItens||{};
 
-    // SERVIÇOS: vêm da própria O.S., como solicitado.
-    const services=(Array.isArray(os?.servicos)?os.servicos:[]).map((s,index)=>{
-      const key=`servico-${index}`;
+    const pieces=(Array.isArray(os?.pecas)?os.pecas:[]).map((p,index)=>{
+      const key='peca-'+index;
+      const cilia=hasCiliaIndex(p?.ciliaPieceIndex);
       return {
-        key,index,tipo:'servico',labelTipo:'SERVIÇO DA O.S.',
+        key,index,tipo:'peca',group:'peca',labelTipo:'PEÇA A TROCAR',
+        descricao:String(p?.desc||p?.descricao||p?.item||p?.nome||p?.peca||p?.peça||'Peça').trim(),
+        codigo:String(p?.codigo||p?.cod||p?.codigoComercial||p?.codigoOEM||p?.oem||p?.partNumber||p?.numeroPeca||'').trim(),
+        marca:String(p?.marca||p?.fabricante||'').trim(),
+        qtd:p?.qtd??p?.q??p?.quantidade??p?.qtde??1,
+        cilia,
+        ciliaPieceIndex:cilia?String(p.ciliaPieceIndex):'',
+        ciliaGrupo:String(p?.ciliaGrupo||p?.ciliaAgrupador||'').trim(),
+        origem:cilia?'CILIA':'OS',
+        aprovado:!approvalExists||keys.has(key),
+        approvalExists,
+        execucao:exec[key]||{},
+        compra:buys[key]||{},
+        removido:itemRemoved(p),
+        source:p
+      };
+    }).filter(x=>!x.removido&&(x.descricao||x.codigo));
+
+    const services=(Array.isArray(os?.servicos)?os.servicos:[]).map((s,index)=>{
+      const key='servico-'+index;
+      const cilia=!!s?.relacionadoCilia||hasCiliaIndex(s?.ciliaPieceIndex);
+      return {
+        key,index,tipo:'servico',group:'servico',labelTipo:'SERVIÇO A FAZER',
         descricao:String(s?.desc||s?.descricao||s?.servico||s?.nome||'Serviço').trim(),
         codigo:String(s?.codigoInterno||s?.codInterno||s?.codigoServicoInterno||s?.codigoTabela||s?.codigo||'').trim(),
         qtd:1,
+        cilia,
+        ciliaPieceIndex:hasCiliaIndex(s?.ciliaPieceIndex)?String(s.ciliaPieceIndex):'',
+        relacionadoCilia:!!s?.relacionadoCilia,
+        pecaCodigo:String(s?.pecaCodigo||s?.codigoPeca||'').trim(),
+        pecaDesc:String(s?.pecaDesc||s?.descricaoPeca||'').trim(),
+        origem:cilia?'CILIA':'OS',
         aprovado:!approvalExists||keys.has(key),
         approvalExists,
         execucao:exec[key]||{},
         compra:null,
-        real:false
+        removido:itemRemoved(s),
+        source:s
       };
-    });
+    }).filter(x=>!x.removido&&(x.descricao||x.codigo));
 
-    // PEÇAS: NUNCA usa os.pecas. Só usa as peças verdadeiramente instaladas
-    // da área restrita *177 (pecasReais / pecasRealmenteTrocadas / itensReais),
-    // excluindo vínculo de NF que o próprio SaaS marca como "não indica instalação".
-    const pieces=trueRealParts(os).map((p,index)=>{
-      const identity=String(p._centralRealIdentity||realPartIdentity(p,index,p._centralRealSource));
-      const key=`real-${identity}`;
-      const origem=norm(p?.origem||'');
-      const hasNF=!!String(p?.nfId||p?.nf||p?.nfNumero||p?.numeroNF||'').trim();
+    return {pieces,services,all:pieces.concat(services)};
+  }
+
+  function workPlan(os,client){
+    const official=isOfficialClient(os,client);
+    const all=workItemsAll(os);
+    const onlyApproved=list=>list.filter(x=>!x.approvalExists||x.aprovado);
+    if(official){
       return {
-        key,index,tipo:'peca',labelTipo:'PEÇA REAL TROCADA',
-        descricao:String(p?.desc||p?.descricao||p?.descricaoExibicao||p?.nomePeca||p?.nome||p?.item||'Peça').trim(),
-        codigo:String(p?.codigo||p?.cod||p?.codigoComercial||p?.codigoFornecedor||p?.oem||'').trim(),
-        qtd:p?.qtd??p?.q??p?.quantidadeOperacionalTotal??p?.quantidade??1,
-        aprovado:true,
-        approvalExists:false,
-        execucao:{
-          status:'trocada',
-          atualizadoPor:p?.registradoPor||p?.atualizadoPor||p?.mecNome||'',
-          atualizadoEm:p?.registradoEm||p?.atualizadoEm||p?.dataInstalacao||p?.dataTroca||''
-        },
-        compra:buys[key]||{},
-        compraFiscal:hasNF,
-        fornecedor:String(p?.fornecedor||p?.fornecedorNome||'').trim(),
-        nfNumero:String(p?.nfNumero||p?.nf||'').trim(),
-        real:true,
-        realSource:p?._centralRealSource||'pecasReais',
-        origem
+        official:true,
+        pieces:onlyApproved(all.pieces.filter(x=>x.cilia)),
+        services:onlyApproved(all.services.filter(x=>x.cilia)),
+        source:'CILIA'
       };
-    });
+    }
+    return {
+      official:false,
+      pieces:onlyApproved(all.pieces),
+      services:onlyApproved(all.services),
+      source:'OS'
+    };
+  }
 
-    return services.concat(pieces).filter(x=>x.descricao||x.codigo);
+  function operationalItems(os){
+    return workItemsAll(os).all;
+  }
+
+  function workExecution(os,key){
+    return (os?.execucaoItens||{})[String(key)]||{};
+  }
+
+  function workPurchase(os,key){
+    const manual=(os?.centralComprasItens||{})[String(key)]||{};
+    const link=(os?.centralCompraVinculos||{})[String(key)]||{};
+    const linked=!!String(link?.nfVinculoId||link?.purchaseId||'').trim();
+    return {
+      ...manual,
+      link,
+      linked,
+      comprado:manual?.comprado===true||linked,
+      status:(manual?.comprado===true||linked)?'comprado':'pendente'
+    };
+  }
+
+  function tokenizePart(v){
+    const stop=new Set(['DA','DE','DO','DAS','DOS','E','COM','SEM','PARA','POR','A','O','AS','OS','PC','UN','UND','KIT']);
+    return norm(v).toUpperCase().replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>1&&!stop.has(x));
+  }
+
+  function purchaseMatchScore(purchase,item){
+    if(!purchase||!item) return 0;
+    const pc=norm(purchase.codigo||purchase.codigoComercial||purchase.codigoFornecedor||'').replace(/\s+/g,'');
+    const ic=norm(item.codigo||'').replace(/\s+/g,'');
+    if(pc&&ic&&pc===ic) return 1;
+    const a=new Set(tokenizePart(purchase.descricao||purchase.desc||''));
+    const b=new Set(tokenizePart(item.descricao||''));
+    if(!a.size||!b.size) return 0;
+    let common=0;
+    a.forEach(x=>{if(b.has(x))common++;});
+    const union=new Set([...a,...b]).size||1;
+    return common/union;
+  }
+
+  function suggestPurchaseTarget(purchase,pieces){
+    const ranked=(pieces||[]).map(item=>({item,score:purchaseMatchScore(purchase,item)}))
+      .sort((a,b)=>b.score-a.score);
+    const best=ranked[0],second=ranked[1];
+    if(!best||best.score<0.34) return '';
+    if(second&&best.score-second.score<0.08) return '';
+    return best.item.key;
+  }
+
+  function compareChecklistToWork(os,client){
+    const plan=checklistPlan(os);
+    const work=workPlan(os,client);
+    const check=plan.pecasTrocar||[];
+    const used=new Set(),matched=[],checklistOnly=[];
+    check.forEach(ci=>{
+      const pseudo={descricao:ci.item,codigo:''};
+      const ranked=work.pieces.map(w=>({w,score:purchaseMatchScore(pseudo,w)}))
+        .filter(x=>!used.has(x.w.key)).sort((a,b)=>b.score-a.score);
+      const best=ranked[0];
+      if(best&&best.score>=0.34){
+        used.add(best.w.key);
+        matched.push({checklist:ci,work:best.w,score:best.score});
+      }else checklistOnly.push(ci);
+    });
+    const workOnly=work.pieces.filter(w=>!used.has(w.key));
+    return {matched,checklistOnly,workOnly,official:work.official};
   }
 
   function safePiece(p){
@@ -345,20 +455,29 @@
     return trueRealParts(os).map(safePiece).filter(Boolean);
   }
 
+
   function safeNF(doc){
     if(!doc) return null;
     const descricao=String(doc.desc||doc.descricao||doc.item||'').trim();
-    const codigo=String(doc.codigo||doc.codigoFornecedor||doc.codigoComercial||'').trim();
+    const codigo=String(doc.codigoComercial||doc.codigo||doc.codigoFornecedor||'').trim();
     if(!descricao&&!codigo) return null;
     return {
-      id:doc.id||'',descricao,codigo,qtd:doc.qtd??doc.quantidade??'',
-      fornecedor:String(doc.fornecedorNome||'').trim(),
-      nfNumero:String(doc.nfNumero||'').trim(),
+      id:doc.id||'',descricao,codigo,
+      codigoFornecedor:String(doc.codigoFornecedor||doc.codigoOriginal||'').trim(),
+      codigoComercial:String(doc.codigoComercial||doc.oem||'').trim(),
+      marca:String(doc.marca||doc.fabricante||'').trim(),
+      qtd:doc.qtd??doc.quantidade??doc.quantidadeOperacionalTotal??'',
+      fornecedor:String(doc.fornecedorNome||doc.fornecedor||'').trim(),
+      nfNumero:String(doc.nfNumero||doc.nf||'').trim(),
       finalidade:String(doc.finalidade||doc.destino||'').trim(),
       status:String(doc.status||doc.statusAplicacao||'').trim(),
+      osId:String(doc.osId||'').trim(),
+      placa:plate(doc.placa||''),
+      origemNFItemKey:String(doc.origemNFItemKey||'').trim(),
       createdAt:doc.createdAt||doc.updatedAt||''
     };
   }
+
   function safeCotacao(doc){
     if(!doc) return null;
     const itens=Array.isArray(doc.itens)?doc.itens:[];
@@ -550,54 +669,11 @@
     return done;
   }
 
+
   async function setExecutionState(db,session,osId,itemKey,done){
-    if(!canExecute(session)) throw new Error('Seu perfil não pode alterar a execução.');
-    const ref=db.collection(CFG.collections.os).doc(osId);
-    const agora=new Date().toISOString();
-    let result=null;
-    await db.runTransaction(async tx=>{
-      const snap=await tx.get(ref);
-      if(!snap.exists) throw new Error('O.S. não encontrada.');
-      const atual=snap.data()||{};
-      const item=operationalItems(atual).find(x=>String(x.key)===String(itemKey));
-      if(!item) throw new Error('Item não encontrado nesta O.S.');
-      if(item.real) throw new Error('Esta peça já é uma peça realmente trocada. Para corrigir esse registro, use o controle de peças reais da O.S.');
-      if(item.approvalExists&&!item.aprovado) throw new Error('Item não aprovado. Não pode ser marcado como executado/trocado.');
-      const execucaoItens={...(atual.execucaoItens||{})};
-      const anterior=execucaoItens[item.key]||{};
-      const status=done?(item.tipo==='peca'?'trocada':'executado'):'pendente';
-      execucaoItens[item.key]={
-        ...anterior,
-        key:item.key,
-        tipo:item.tipo,
-        status,
-        obs:anterior.obs||'',
-        mecId:session.funcionarioId||anterior.mecId||'',
-        mecNome:session.name||anterior.mecNome||'',
-        responsavelId:session.funcionarioId||anterior.responsavelId||'',
-        responsavelNome:session.name||anterior.responsavelNome||'',
-        atualizadoEm:agora,
-        atualizadoPorId:session.funcionarioId||session.email||'',
-        atualizadoPor:session.name||'Equipe',
-        atualizadoPorTipo:session.role||session.cargo||'equipe',
-        origemAtualizacao:'CENTRAL-VIATURAS'
-      };
-      const acao=done?(item.tipo==='peca'?'marcou_peca_trocada':'marcou_servico_executado'):'reabriu_execucao';
-      const ev=makeEvent(session,'execucao',acao,{
-        itemKey:item.key,itemTipo:item.tipo,descricao:item.descricao,codigo:item.codigo||'',status
-      });
-      tx.update(ref,{
-        execucaoItens,
-        centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
-        timeline:pushTimeline(atual.timeline,session.name,`Central: ${item.tipo==='peca'?(done?'peça marcada como trocada':'peça reaberta'):(done?'serviço marcado como executado':'serviço reaberto')} — ${item.descricao}`,agora),
-        centralViaturasAtualizadoEm:agora,
-        centralViaturasAtualizadoPor:session.name||'Usuário',
-        updatedAt:agora
-      });
-      result={item,status,done};
-    });
-    return result;
+    return setWorkState(db,session,osId,itemKey,done?'concluido':'pendente','');
   }
+
 
   async function addRealPart(db,session,osId,input){
     if(!isManager(session)) throw new Error('Somente gestão pode acessar o controle confidencial de peças.');
@@ -830,6 +906,7 @@
   }
 
 
+
   async function setPurchaseState(db,session,osId,itemKey,bought){
     if(!canPurchase(session)) throw new Error('Somente gestor, gerente ou administrador pode marcar compra.');
     const ref=db.collection(CFG.collections.os).doc(osId);
@@ -839,53 +916,42 @@
       const snap=await tx.get(ref);
       if(!snap.exists) throw new Error('O.S. não encontrada.');
       const atual=snap.data()||{};
-      const item=operationalItems(atual).find(x=>String(x.key)===String(itemKey));
-      if(!item) throw new Error('Item não encontrado nesta O.S.');
-      if(item.tipo!=='peca') throw new Error('Compra manual só se aplica a peças.');
+      const item=workItemsAll(atual).pieces.find(x=>String(x.key)===String(itemKey));
+      if(!item) throw new Error('Peça não encontrada nesta O.S.');
       const compras={...(atual.centralComprasItens||{})};
       const anterior=compras[item.key]||{};
       compras[item.key]={
-        ...anterior,
-        key:item.key,
-        tipo:'peca',
-        descricao:item.descricao,
-        codigo:item.codigo||'',
-        qtd:item.qtd??1,
-        comprado:!!bought,
-        status:bought?'comprado':'pendente',
-        compradoEm:bought?agora:'',
-        compradoPor:bought?(session.name||'Gestão'):'',
-        atualizadoEm:agora,
-        atualizadoPor:session.name||'Gestão',
-        atualizadoPorId:session.funcionarioId||session.email||'',
-        atualizadoPorTipo:session.role||session.cargo||'gestao',
+        ...anterior,key:item.key,tipo:'peca',descricao:item.descricao,codigo:item.codigo||'',qtd:item.qtd??1,
+        comprado:!!bought,status:bought?'comprado':'pendente',compradoEm:bought?agora:'',
+        compradoPor:bought?(session.name||'Gestão'):'',atualizadoEm:agora,atualizadoPor:session.name||'Gestão',
+        atualizadoPorId:session.funcionarioId||session.email||'',atualizadoPorTipo:session.role||session.cargo||'gestao',
         origem:'CENTRAL-VIATURAS'
       };
       const ev=makeEvent(session,'compra',bought?'marcou_peca_comprada':'desmarcou_peca_comprada',{
         itemKey:item.key,itemTipo:'peca',descricao:item.descricao,codigo:item.codigo||'',status:bought?'comprado':'pendente'
       });
       tx.update(ref,{
-        centralComprasItens:compras,
-        centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
-        timeline:pushTimeline(atual.timeline,session.name,`Central: ${bought?'peça marcada como comprada':'compra desmarcada'} — ${item.descricao}`,agora),
-        centralViaturasAtualizadoEm:agora,
-        centralViaturasAtualizadoPor:session.name||'Usuário',
-        updatedAt:agora
+        centralComprasItens:compras,centralViaturasRelatorio:pushReport(atual.centralViaturasRelatorio,ev),
+        timeline:pushTimeline(atual.timeline,session.name,'Central: '+(bought?'peça marcada como comprada':'compra desmarcada')+' — '+item.descricao,agora),
+        centralViaturasAtualizadoEm:agora,centralViaturasAtualizadoPor:session.name||'Usuário',updatedAt:agora
       });
       result={item,bought};
     });
     return result;
   }
 
+
   window.CentralData={
     norm,plate,iso,ts,fmt,escapeHtml,
     role,isManager,canExecute,canPurchase,
     getOSPlate,getOSNumber,getVehicleLabel,getClientLabel,activityTs,activityIso,
     normalizeEtapas,checklistSummary,checklistPlan,checklistExecution,checklistPurchase,isActive,
-    approvedKeys,hasApproval,executionFinished,getRealParts,isTrulyInstalledRealPart,trueRealParts,operationalItems,
+    approvedKeys,hasApproval,executionFinished,getRealParts,isTrulyInstalledRealPart,trueRealParts,
+    hasCiliaIndex,isOfficialClient,workItemsAll,workPlan,operationalItems,workExecution,workPurchase,
+    purchaseMatchScore,suggestPurchaseTarget,compareChecklistToWork,
     osPieces,safeNF,safeCotacao,reportEvents,
     loadReads,markRead,seenAt,
     queryByTenant,loadReferenceData,listenOS,findOSByPlate,loadOperationalExtras,
-    addEtapa,toggleEtapa,addRealPart,setExecutionState,setChecklistExecutionState,setChecklistPurchaseState,setPurchaseState
+    addEtapa,toggleEtapa,setWorkState,linkPurchaseToWorkItem,addRealPart,setExecutionState,setChecklistExecutionState,setChecklistPurchaseState,setPurchaseState
   };
 })();
