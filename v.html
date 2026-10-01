@@ -4,30 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1118">
-  <title>Central de Viaturas — Abrir viatura</title>
+  <title>Valêncio SOS — Abrir veículo</title>
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Central de Viaturas">
-  <meta property="og:title" content="Central de Viaturas">
-  <meta property="og:description" content="ABRIR VIATURA • Acompanhamento operacional">
+  <meta property="og:site_name" content="Valêncio SOS">
+  <meta property="og:title" content="Valêncio SOS">
+  <meta property="og:description" content="ABRIR VEÍCULO • Acompanhamento operacional">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Central de Viaturas">
-  <meta name="twitter:description" content="ABRIR VIATURA • Acompanhamento operacional">
-  <link rel="manifest" href="/CENTRAL-VIATURAS/manifest-viaturas-v2.webmanifest?v=1.4.10">
+  <meta name="twitter:title" content="Valêncio SOS">
+  <meta name="twitter:description" content="ABRIR VEÍCULO • Acompanhamento operacional">
+  <link rel="manifest" href="/CENTRAL-VIATURAS/manifest-viaturas-v2.webmanifest?v=1.4.11">
   <link rel="icon" type="image/png" sizes="64x64" href="https://viaturas.vercel.app/api/app-icon?size=64&v=144">
   <link rel="apple-touch-icon" sizes="180x180" href="https://viaturas.vercel.app/api/app-icon?size=180&v=144">
-  <meta name="application-name" content="Central de Viaturas">
+  <meta name="application-name" content="Valêncio SOS">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Viaturas">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="css/app.css?v=1.4.10">
-  <script src="js/theme.js?v=1.4.10"></script>
-  <script defer src="js/install.js?v=1.4.10"></script>
+  <link rel="stylesheet" href="css/app.css?v=1.4.11">
+  <link rel="stylesheet" href="css/v1411.css?v=1.4.11">
+  <script src="js/theme.js?v=1.4.11"></script>
+  <script defer src="js/install.js?v=1.4.11"></script>
 </head>
 <body>
 <section id="loginView" class="login-wrap hidden">
   <form id="loginForm" class="login-card">
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="brand" style="flex:1"><div class="brand-mark">CV</div><div class="brand-text"><b>Central de Viaturas</b><span id="loginTarget">Acesso à viatura</span></div></div>
+      <div class="brand" style="flex:1"><div class="brand-mark">CV</div><div class="brand-text"><b>Valêncio SOS</b><span id="loginTarget">Acesso ao veículo</span></div></div>
       <div class="login-quick-actions"><button type="button" class="btn compact install-btn" data-install-app hidden>INSTALAR APP</button><button type="button" class="btn compact" data-theme-toggle>TEMA</button></div>
     </div>
     <h1>Acesso interno</h1>
@@ -44,7 +45,7 @@
 <section id="detailView" class="hidden">
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand clickable" onclick="location.href='index.html'"><div class="brand-mark">CV</div><div class="brand-text"><b>Central de Viaturas</b><span id="userLabel"></span></div></div>
+      <div class="brand clickable" onclick="location.href='index.html'"><div class="brand-mark">CV</div><div class="brand-text"><b>Valêncio SOS</b><span id="userLabel"></span></div></div>
       <div class="top-actions">
         <button type="button" class="btn" data-back="index.html">VOLTAR</button>
         <button type="button" class="btn install-btn" data-install-app hidden>INSTALAR APP</button>
@@ -101,13 +102,28 @@
   </nav>
 </section>
 
+<dialog id="workNoteDialog" class="work-note-dialog">
+  <form id="workNoteForm" method="dialog">
+    <h3>Registrar impedimento / não resolveu</h3>
+    <p id="workNoteItem">Item</p>
+    <input id="workNoteKey" type="hidden">
+    <textarea id="workNoteText" class="search" maxlength="500" placeholder="Ex.: substituído, mas o ruído continuou. Necessário novo diagnóstico." required></textarea>
+    <div class="dialog-actions">
+      <button type="button" class="btn" data-close-work-note>CANCELAR</button>
+      <button type="submit" class="btn danger">REGISTRAR IMPEDIMENTO</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=1.4.10"></script>
-<script src="js/auth.js?v=1.4.10"></script>
-<script src="js/data.js?v=1.4.10"></script>
-<script src="js/viatura.js?v=1.4.10"></script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/CENTRAL-VIATURAS/service-worker.js?v=1.4.10',{scope:'/CENTRAL-VIATURAS/'}).catch(()=>{});</script>
+<script src="js/config.js?v=1.4.11"></script>
+<script src="js/auth.js?v=1.4.11"></script>
+<script src="js/data.js?v=1.4.11"></script>
+<script src="js/workflow-v1411.js?v=1.4.11"></script>
+<script src="js/ui-v1411.js?v=1.4.11"></script>
+<script src="js/viatura.js?v=1.4.11"></script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/CENTRAL-VIATURAS/service-worker.js?v=1.4.11',{scope:'/CENTRAL-VIATURAS/'}).catch(()=>{});</script>
 </body>
 </html>
