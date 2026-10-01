@@ -1,0 +1,59 @@
+/* Valêncio SOS — Central V1.4.11 */
+.brand-logo{width:44px;height:44px;border-radius:12px;object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.official-mode{margin:0 0 14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(249,115,22,.36);background:rgba(249,115,22,.10);font-size:12px;line-height:1.5}
+.official-mode b{letter-spacing:.05em}
+.op-row.is-blocked{border-color:rgba(239,68,68,.55)!important;background:rgba(239,68,68,.08)!important}
+.op-row.is-progress{border-color:rgba(59,130,246,.42)!important;background:rgba(59,130,246,.055)!important}
+.op-statuses{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.state-chip{display:inline-flex;align-items:center;min-height:24px;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.035em;border:1px solid var(--border)}
+.state-chip.pending{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.35)}
+.state-chip.progress{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.35)}
+.state-chip.ok{background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.35)}
+.state-chip.danger{background:rgba(239,68,68,.11);border-color:rgba(239,68,68,.42)}
+.state-chip.bought{background:rgba(168,85,247,.10);border-color:rgba(168,85,247,.36)}
+.work-note{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(239,68,68,.08);font-size:11px;line-height:1.45}
+.origin-blocked{border-color:rgba(239,68,68,.35)!important}
+.origin-parts .op-group-head{background:linear-gradient(90deg,rgba(37,99,235,.10),transparent)}
+.origin-services .op-group-head{background:linear-gradient(90deg,rgba(16,185,129,.10),transparent)}
+.origin-completed .op-group-head{background:linear-gradient(90deg,rgba(100,116,139,.08),transparent)}
+.management-pending-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.management-pending-grid .warn-card{border-color:rgba(239,68,68,.38);background:rgba(239,68,68,.08)}
+.team-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.checklist-reference-row{border-left:4px solid #f59e0b!important}
+.compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.compare-box{border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.compare-box>b{font-size:11px;letter-spacing:.035em}
+.compare-box>span{font-size:26px;font-weight:900;line-height:1}
+.compare-box small{display:block;padding:5px 0;border-top:1px solid var(--border);font-size:10px;line-height:1.35}
+.compare-box.matched{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.05)}
+.compare-box.checkonly{border-color:rgba(245,158,11,.38);background:rgba(245,158,11,.055)}
+.compare-box.workonly{border-color:rgba(59,130,246,.36);background:rgba(59,130,246,.05)}
+.compare-note{margin-top:10px}
+.purchase-link-row{border-left:4px solid #8b5cf6!important}
+.purchase-linked{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(34,197,94,.08);font-size:11px}
+.purchase-suggest{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.08);font-size:11px}
+.purchase-link-controls{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:8px;align-items:center;margin-top:9px}
+.purchase-link-controls .search{margin:0;min-height:40px}
+.work-note-dialog{width:min(520px,calc(100vw - 28px));border:1px solid var(--border);border-radius:18px;padding:0;background:var(--panel);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.38)}
+.work-note-dialog::backdrop{background:rgba(2,6,23,.65);backdrop-filter:blur(3px)}
+.work-note-dialog form{padding:18px}
+.work-note-dialog h3{margin:0 0 6px;font-size:17px}
+.work-note-dialog p{margin:0 0 12px;color:var(--muted);font-size:12px}
+.work-note-dialog textarea{width:100%;min-height:120px;resize:vertical}
+.dialog-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+#checklistSummaryPanel.panel-minimized .progress{display:none}
+@media(max-width:760px){
+  .management-pending-grid,.team-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .compare-grid{grid-template-columns:1fr}
+  .purchase-link-controls{grid-template-columns:1fr}
+  .purchase-link-controls .btn{width:100%}
+  .op-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%}
+  .op-actions .btn{width:100%;min-height:42px}
+  .op-actions .btn.danger:last-child{grid-column:1/-1}
+  .brand-logo{width:40px;height:40px}
+}
+@media(max-width:420px){
+  .management-pending-grid,.team-grid{grid-template-columns:1fr 1fr!important}
+  .op-actions{grid-template-columns:1fr}
+  .op-actions .btn.danger:last-child{grid-column:auto}
+}
