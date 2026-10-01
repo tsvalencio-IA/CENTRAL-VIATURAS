@@ -174,3 +174,19 @@
 - Start URL exclusivo: `/CENTRAL-VIATURAS/index.html?app=viaturas-v2`.
 - Scope exclusivo: `/CENTRAL-VIATURAS/`.
 - Evita reutilização da identidade instalada do COTARP no Chrome/Windows.
+
+
+## 1.5.0 — 2026-10-01
+
+- Alteração somente no repositório CENTRAL-VIATURAS.
+- Criada fila operacional da viatura para evitar peças e serviços esquecidos.
+- Cliente oficial/governo: equipe vê somente peças da O.S. importadas do Cilia; gestão vê peças e serviços Cilia.
+- Cliente normal: equipe e gestão trabalham com peças e serviços cadastrados na própria O.S.
+- Equipe nunca vê fornecedor, marca, código de compra, NF ou status comercial da compra.
+- Itens operacionais agora suportam PENDENTE, EM EXECUÇÃO, CONCLUÍDO e IMPEDIDO / NÃO RESOLVEU, com observação por item.
+- Gestão recebe resumo: o que falta fazer, o que falta comprar, comprado aguardando execução e impedimentos.
+- Peças compradas por NF podem ser vinculadas manualmente à peça correspondente da O.S./Cilia; o sistema sugere uma correspondência quando ela é segura.
+- Compra e execução permanecem estados separados.
+- Checklist anexado à O.S. fica disponível em painel minimizado de referência para equipe e gestão.
+- Gestão recebe comparação do checklist com as peças reais de trabalho da O.S./Cilia, sem alterar o CHECKLIS_SOS.
+- Peça concluída pela equipe gera registro operacional da instalação na área gerencial, sem expor esse controle ao mecânico.
