@@ -23,6 +23,8 @@ jobs:
           node --check js/install.js
           node --check js/auth.js
           node --check js/data.js
+          node --check js/workflow-v1411.js
+          node --check js/ui-v1411.js
           node --check js/index.js
           node --check js/viatura.js
           node --check api/share.js
@@ -36,6 +38,15 @@ jobs:
           test -f manifest.webmanifest
           test -f service-worker.js
           test -f js/install.js
+          test -f js/workflow-v1411.js
+          test -f js/ui-v1411.js
+          test -f css/v1411.css
+          grep -q 'workflow-v1411.js?v=1.4.12' viatura.html
+          grep -q 'ui-v1411.js?v=1.4.12' viatura.html
+          grep -q 'workflow-v1411.js?v=1.4.12' v.html
+          grep -q 'ui-v1411.js?v=1.4.12' v.html
+          grep -q 'v1411Context' js/viatura.js
+          grep -q 'Valêncio SOS' manifest-viaturas-v2.webmanifest
           test -f api/app-icon.mjs
           test -f api/share.js
           test -f api/og.mjs
