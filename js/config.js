@@ -1,8 +1,8 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.4.10',
-  appName: 'Central de Viaturas',
+  version: '1.4.11',
+  appName: 'Valêncio SOS',
   footer: 'Powered by thIAguinho Soluções Digitais',
   firebaseConfig: {
     apiKey: 'AIzaSyBqIuCsHHuy_f-mBWV4JBkbyOorXpqQvqg',
