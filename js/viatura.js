@@ -22,7 +22,7 @@
     $('loginView').classList.remove('hidden');
     $('detailView').classList.add('hidden');
     $('loginUsr').value=A.lastUser();
-    $('loginTarget').textContent=requestedPlate?`Acesso à viatura ${requestedPlate}`:'Acesso à Central de Viaturas';
+    $('loginTarget').textContent=requestedPlate?`Acesso à viatura ${requestedPlate}`:'Acesso à Valêncio SOS';
   }
   function showDetail(){
     $('loginView').classList.add('hidden');
