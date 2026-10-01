@@ -354,47 +354,24 @@
   }
 
   function printOperational(){
-    const plan=D.checklistPlan(os);
-    const osServices=D.operationalItems(os).filter(x=>x.tipo==='servico');
-    const real=D.osPieces(os);
-    const rows=(title,items,kind)=> {
-      const body=items.map(item=>{
-        let desc='',meta='',status='';
-        if(kind==='os'){
-          desc=item.descricao||'Serviço';
-          meta='Serviço da O.S.';
-          status=D.executionFinished(String(item.execucao?.status||''))?'EXECUTADO':'PENDENTE';
-        }else if(kind==='real'){
-          desc=item.descricao||item.codigo||'Peça';
-          meta='Peça realmente trocada';
-          status='TROCADA';
-        }else{
-          desc=item.item||'Item';
-          meta=(item.secao||'Checklist')+(item.acaoLabel?' • '+item.acaoLabel:'');
-          const st=String(D.checklistExecution(os,item.key)?.status||'pendente');
-          status=D.executionFinished(st)||st==='resolvido'?(item.group==='peca'?'TROCADA':item.group==='atencao'?'RESOLVIDO':'EXECUTADO'):'PENDENTE';
-          if(item.group==='peca' && D.checklistPurchase(os,item.key)?.comprado) status+=' • COMPRADA';
-        }
-        return '<tr><td>'+D.escapeHtml(desc)+'</td><td>'+D.escapeHtml(meta)+'</td><td>'+D.escapeHtml(status)+'</td></tr>';
-      }).join('');
-      return '<h2>'+D.escapeHtml(title)+'</h2><table><thead><tr><th>Item</th><th>Origem / ação</th><th>Status</th></tr></thead><tbody>'+(body||'<tr><td colspan="3">Nenhum item</td></tr>')+'</tbody></table>';
-    };
-
+    if(!D.buildWorkPlan){ toast('Relatório operacional indisponível.','err'); return; }
+    const p=D.buildWorkPlan(os,getClient(),session);
+    const manager=D.isManager(session);
+    const body=p.all.map(item=>{
+      const linked=manager&&item.tipo==='peca'&&D.purchaseLinkForWork?D.purchaseLinkForWork(os,item.key):null;
+      const meta=[item.source||'O.S.',manager&&item.codigo?('Cód. '+item.codigo):'',manager&&item.marca?('Marca '+item.marca):'',manager&&linked?'COMPRA VINCULADA':''].filter(Boolean).join(' • ');
+      return '<tr><td>'+D.escapeHtml(item.descricao||item.codigo||item.key)+'</td><td>'+D.escapeHtml(item.tipo==='peca'?'PEÇA':'SERVIÇO')+'</td><td>'+D.escapeHtml(D.statusLabel(item.status,item.tipo))+'</td><td>'+D.escapeHtml(meta)+'</td></tr>';
+    }).join('');
     const w=window.open('','_blank');
     if(!w){ toast('O navegador bloqueou a janela de impressão.','err'); return; }
-    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Relatório operacional '+D.escapeHtml(currentPlate())+'</title><style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;color:#111;font-size:11px}h1{font-size:20px;margin:0 0 4px}h2{font-size:13px;margin:16px 0 5px}p{margin:2px 0 10px;color:#444}table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #bbb;padding:5px;text-align:left;vertical-align:top}th{background:#eee}.footer{margin-top:18px;text-align:center;font-size:9px;color:#666}</style></head><body>'+
-      '<h1>RELATÓRIO OPERACIONAL DA VIATURA '+D.escapeHtml(currentPlate())+'</h1>'+
-      '<p>O.S. '+D.escapeHtml(D.getOSNumber(os)||os.id)+' • '+D.escapeHtml(D.getVehicleLabel(os,getVehicle()))+' • Impresso em '+D.escapeHtml(new Date().toLocaleString('pt-BR'))+'</p>'+
-      rows('SERVIÇOS DA O.S.',osServices,'os')+
-      rows('PEÇAS A TROCAR — CHECKLIST',plan.pecasTrocar,'check')+
-      rows('SERVIÇOS A EXECUTAR — CHECKLIST',plan.servicosExecutar,'check')+
-      (D.isManager(session)?rows('ATENÇÕES / OBSERVAR — CHECKLIST',plan.atencoes,'check'):'')+
-      (D.isManager(session)?rows('CONTROLE GERENCIAL DE PEÇAS',real,'real'):'')+
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Valêncio SOS '+D.escapeHtml(currentPlate())+'</title><style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;color:#111;font-size:11px}h1{font-size:20px;margin:0 0 4px}p{margin:2px 0 10px;color:#444}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #bbb;padding:5px;text-align:left;vertical-align:top}th{background:#eee}.footer{margin-top:18px;text-align:center;font-size:9px;color:#666}</style></head><body>'+
+      '<h1>VALÊNCIO SOS — '+D.escapeHtml(currentPlate())+'</h1>'+
+      '<p>O.S. '+D.escapeHtml(D.getOSNumber(os)||os.id)+' • '+D.escapeHtml(D.getVehicleLabel(os,getVehicle()))+' • '+(p.official?'CLIENTE OFICIAL / CILIA':'CLIENTE NORMAL')+'</p>'+
+      '<table><thead><tr><th>Item</th><th>Tipo</th><th>Status</th><th>'+(manager?'Origem / gestão':'Origem')+'</th></tr></thead><tbody>'+(body||'<tr><td colspan="4">Nenhum item operacional.</td></tr>')+'</tbody></table>'+
       '<div class="footer">Powered by thIAguinho Soluções Digitais</div></body></html>');
     w.document.close();
     setTimeout(()=>w.print(),250);
   }
-
 
   function renderPieces(){
     const panel=$('realPartsPanel');
@@ -463,7 +440,11 @@
       concluiu_item_checklist:'Item do checklist concluído',
       reabriu_item_checklist:'Item do checklist reaberto',
       marcou_peca_checklist_comprada:'Peça do checklist marcada como comprada',
-      reabriu_compra_peca_checklist:'Compra do checklist reaberta'
+      reabriu_compra_peca_checklist:'Compra do checklist reaberta',
+      iniciou_execucao:'Execução iniciada',
+      marcou_impedimento:'Impedimento / não resolveu',
+      vinculou_compra_item:'Compra vinculada à peça da O.S.',
+      desvinculou_compra_item:'Vínculo de compra removido'
     };
     return map[a]||'Atualização da Central';
   }
@@ -474,7 +455,7 @@
     const report=D.reportEvents(os).filter(e=>{
       if(manager) return true;
       const a=String(e?.acao||'');
-      if(['registrou_peca_real_trocada','marcou_peca_trocada','marcou_peca_comprada','desmarcou_peca_comprada','marcou_peca_checklist_comprada','reabriu_compra_peca_checklist'].includes(a)) return false;
+      if(['registrou_peca_real_trocada','marcou_peca_trocada','marcou_peca_comprada','desmarcou_peca_comprada','marcou_peca_checklist_comprada','reabriu_compra_peca_checklist','vinculou_compra_item','desvinculou_compra_item'].includes(a)) return false;
       return true;
     });
     report.forEach(e=>ev.push({
@@ -568,7 +549,6 @@
       if(!snap.exists){ toast('O.S. não encontrada.','err'); return; }
       os={id:snap.id,...snap.data()};
       renderAll();
-      await loadExtras();
     },e=>toast(e.message||'Falha na atualização em tempo real.','err'));
   }
 
