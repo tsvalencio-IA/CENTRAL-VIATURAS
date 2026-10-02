@@ -1,4 +1,4 @@
-/* Valêncio SOS — Central V1.4.11 */
+/* Valêncio SOS — Central V1.4.13 */
 .brand-logo{width:44px;height:44px;border-radius:12px;object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .official-mode{margin:0 0 14px;padding:12px 14px;border-radius:14px;border:1px solid rgba(249,115,22,.36);background:rgba(249,115,22,.10);font-size:12px;line-height:1.5}
 .official-mode b{letter-spacing:.05em}
@@ -20,7 +20,7 @@
 .management-pending-grid .warn-card{border-color:rgba(239,68,68,.38);background:rgba(239,68,68,.08)}
 .team-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 .checklist-reference-row{border-left:4px solid #f59e0b!important}
-.compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
 .compare-box{border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .compare-box>b{font-size:11px;letter-spacing:.035em}
 .compare-box>span{font-size:26px;font-weight:900;line-height:1}
@@ -43,6 +43,9 @@
 .dialog-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 #checklistSummaryPanel.panel-minimized .progress{display:none}
 @media(max-width:760px){
+  .purchase-status-row{grid-template-columns:1fr}
+  .purchase-status-row .op-actions{width:100%}
+  .purchase-status-row .op-actions .btn{width:100%}
   .management-pending-grid,.team-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .compare-grid{grid-template-columns:1fr}
   .purchase-link-controls{grid-template-columns:1fr}
@@ -57,3 +60,27 @@
   .op-actions{grid-template-columns:1fr}
   .op-actions .btn.danger:last-child{grid-column:auto}
 }
+.compare-intro{display:flex;flex-direction:column;gap:4px;margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--panel3)}
+.compare-intro b{font-size:12px}
+.compare-intro span{font-size:10px;color:var(--muted);line-height:1.4}
+.compare-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.compare-title>span{font-size:22px;font-weight:900}
+.compare-box.mismatch{border-color:rgba(239,68,68,.40);background:rgba(239,68,68,.055)}
+.compare-more{font-weight:900;color:var(--muted2)}
+.service-compare-summary{margin-top:10px;padding:9px 11px;border-radius:11px;border:1px dashed var(--border);font-size:10px;color:var(--muted2)}
+.purchase-dashboard .buy-missing-card{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.09)}
+.purchase-dashboard .buy-missing-card b{color:#ef4444}
+.purchase-dashboard .buy-linked-card{border-color:rgba(34,197,94,.38);background:rgba(34,197,94,.07)}
+.purchase-dashboard .buy-linked-card b{color:#22c55e}
+.origin-buy-missing{border-color:rgba(239,68,68,.42)!important}
+.origin-buy-missing .op-group-head{background:linear-gradient(90deg,rgba(239,68,68,.14),transparent)}
+.origin-buy-linked{border-color:rgba(34,197,94,.35)!important}
+.origin-buy-linked .op-group-head{background:linear-gradient(90deg,rgba(34,197,94,.10),transparent)}
+.purchase-status-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--border);border-radius:13px;padding:12px;margin:8px 0;background:var(--panel3)}
+.purchase-status-row.missing{border-left:4px solid #ef4444}
+.purchase-status-row.bought{border-left:4px solid #22c55e}
+.purchase-status-main{min-width:0}
+.purchase-check-detail{margin-top:6px;font-size:10px;color:var(--muted2)}
+.purchase-linked-detail{margin-top:7px;padding:7px 9px;border-radius:9px;background:rgba(34,197,94,.08);font-size:10px;color:var(--muted2)}
+.state-chip.none{background:rgba(100,116,139,.09);border-color:rgba(100,116,139,.28)}
+.state-chip.warn{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.35)}
