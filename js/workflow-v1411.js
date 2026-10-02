@@ -184,45 +184,212 @@
     return {linked,mapKey};
   }
 
+  function canonical(v){
+    return norm(v)
+      .replace(/\bdiant(?:eiro|eira)?\b/g,' dianteiro ')
+      .replace(/\btras(?:eiro|eira)?\b/g,' traseiro ')
+      .replace(/\bdir(?:eito|eita)?\b/g,' direito ')
+      .replace(/\besq(?:uerdo|uerda)?\b/g,' esquerdo ')
+      .replace(/\bpivos\b/g,'pivo')
+      .replace(/\bbieletas\b/g,'bieleta')
+      .replace(/\bamortecedores\b/g,'amortecedor')
+      .replace(/\bbuchas\b/g,'bucha')
+      .replace(/\bbandejas\b/g,'bandeja')
+      .replace(/\bcoifas\b/g,'coifa')
+      .replace(/\bvelas\b/g,'vela')
+      .replace(/\bcorreias\b/g,'correia')
+      .replace(/\bpalhetas\b/g,'palheta')
+      .replace(/\bpneus\b/g,'pneu')
+      .replace(/\bcoxins\b/g,'coxim')
+      .replace(/\brolamentos\b/g,'rolamento')
+      .replace(/\bfiltros\b/g,'filtro')
+      .replace(/\bbobinas\b/g,'bobina')
+      .replace(/\bcabos\b/g,'cabo')
+      .replace(/\btensores\b/g,'tensor')
+      .replace(/\baneis\b/g,'anel')
+      .replace(/\bvedacoes\b/g,'vedacao')
+      .replace(/\bbicos\b/g,'bico')
+      .replace(/\breservatorios\b/g,'reservatorio')
+      .replace(/\bsemi[\s-]*eixos\b/g,'semi eixo')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function axleOf(v){
+    const p=canonical(v);
+    if(/\btraseir/.test(p)) return 'R';
+    if(/\bdianteir|\bparabrisa\b/.test(p)) return 'F';
+    return '';
+  }
+
+  function sideOf(v){
+    const p=canonical(v);
+    if(/\besquerd/.test(p)) return 'L';
+    if(/\bdireit/.test(p)) return 'R';
+    return '';
+  }
+
+  function concepts(v){
+    const p=canonical(v), out=new Set();
+    const add=x=>out.add(x);
+
+    if(/\bpivo\b/.test(p)) add('pivo');
+    if(/\bbieleta\b|haste.*barra.*estabiliz/.test(p)) add('bieleta');
+    if(/\bbraco oscilante\b|\bbandeja\b/.test(p)) add('bandeja');
+    if(/\bbucha\b.*\bbandeja\b|\bbandeja\b.*\bbucha\b/.test(p)) add('bucha_bandeja');
+
+    if(/\bcoifa\b.*\bamortecedor\b/.test(p)) add('coifa_amortecedor');
+    if(/\bbatente\b.*\bamortecedor\b/.test(p)) add('batente_amortecedor');
+    if(/\bcoxim\b.*\bamortecedor\b/.test(p)) add('coxim_amortecedor');
+    if(/\bamortecedor\b/.test(p) && !/\bcoifa\b|\bbatente\b|\bcoxim\b/.test(p)) add('amortecedor');
+
+    if(/\brolamento\b.*\broda\b/.test(p)) add('rolamento_roda');
+    if(/\bcubo\b.*(?:\brolamento\b|\broda\b)|\bcubo da roda\b/.test(p)) add('cubo_roda');
+
+    if(/\bvela\b.*(?:ignicao|aquecimento)|(?:ignicao|aquecimento).*\bvela\b/.test(p)) add('vela');
+    if(/\bcorreia\b.*(?:dentad|comando)|\bcorrente\b.*\bcomando\b/.test(p)) add('correia_dentada');
+    if(/\bcorreia\b.*(?:acessor|auxiliar|alternador)|\bpoli v\b/.test(p)) add('correia_acessorios');
+    if(/\bpolia\b.*\balternador\b|\brolamento\b.*\balternador\b/.test(p)) add('polia_alternador');
+    if(/\btensor\b|\btensionador\b|\bpolia tensora\b/.test(p)) add('tensor_correia');
+
+    if(/\bbomba\b.*\bagua\b/.test(p)) add('bomba_agua');
+    if(/\bbomba\b.*\bcombustivel\b/.test(p)) add('bomba_combustivel');
+
+    if(/\bcoxim\b.*\bcambio\b|\bsuporte\b.*\bcambio\b/.test(p)) add('coxim_cambio');
+    if(/\bcoxim\b.*\bmotor\b/.test(p)) add('coxim_motor');
+    if(/\bcoxim\b.*(?:motor|cambio)|\bsuporte\b.*\bcambio\b/.test(p)) add('coxim_motor_cambio');
+
+    if(/(?:\bmaquina\b|\bmotor\b).*\bvidro\b|\bvidro\b.*(?:\bmaquina\b|\bmotor\b)/.test(p)) add('maquina_motor_vidro');
+    if(/\bbotao\b.*\bvidro\b/.test(p)) add('botao_vidro');
+
+    if(/\bpalheta\b/.test(p)) add('palheta');
+    if(/\bradiador\b/.test(p)) add('radiador');
+    if(/\bhigieniz.*ar condicionado\b/.test(p)) add('higienizacao_ar');
+    if(/\bcarpete\b|\bassoalho\b/.test(p)) add('carpete_assoalho');
+    if(/\bbateria\b/.test(p)) add('bateria');
+    if(/(?:\bguarnicao\b|\bborracha\b|\bvedacao\b).*\bporta\b/.test(p)) add('vedacao_porta');
+
+    if(/\bpastilha\b.*\bfreio\b/.test(p)) add('pastilha_freio');
+    if(/\bdisco\b.*\bfreio\b/.test(p)) add('disco_freio');
+    if(/\bfluido\b.*\bfreio\b/.test(p)) add('fluido_freio');
+    if(/\bpneu\b/.test(p)) add('pneu');
+    if(/\bfiltro\b.*\bar\b/.test(p) && !/ar condicionado|cabine/.test(p)) add('filtro_ar');
+    if(/\bbobina\b/.test(p)) add('bobina');
+    if(/\bcabo\b.*\bvela\b/.test(p)) add('cabo_vela');
+    if(/\bbobina\b|\bcabo\b.*\bvela\b/.test(p)) add('ignicao_bobina_cabo');
+    if(/\banel\b.*\bvedacao\b.*\bbico\b|\bvedacao\b.*\bbico\b.*\binjetor\b/.test(p)) add('anel_bico_injetor');
+    if(/\banti chama\b|\bpcv\b|\brespiro\b/.test(p)) add('pcv_respiro');
+    if(/\bliquido\b.*\barrefecimento\b/.test(p)) add('liquido_arrefecimento');
+    if(/\bvalvula\b.*\btermostat/.test(p)) add('valvula_termostatica');
+    if(/\breservatorio\b.*(?:arrefecimento|agua)|\btampa\b.*\breservatorio\b/.test(p)) add('reservatorio_arrefecimento');
+    if(/\bfluido\b.*\bdirecao\b/.test(p)) add('fluido_direcao');
+    if(/\bsemi eixo\b|\bhomocinetica\b/.test(p)) add('homocinetica');
+    if(/\bcoifa\b.*\bhomocinetica\b/.test(p)) add('coifa_homocinetica');
+
+    if(/\bfechadura\b.*\bcapo\b/.test(p)) add('fechadura_capo');
+    if(/\bretrovisor\b|\bespelho\b.*\bretrovisor\b/.test(p)) add('retrovisor');
+    if(/\bparabrisa\b/.test(p) && !/\bpalheta\b/.test(p)) add('parabrisa');
+    if(/\bmodulo\b.*\bconforto\b|\bcentral\b.*\bmultimidia\b/.test(p)) add('eletronica_conforto');
+
+    return out;
+  }
+
   function tokens(v){
-    return new Set(norm(v).replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(x=>x.length>2&&!['para','com','sem','lado','peca','servico','troca'].includes(x)));
+    return new Set(canonical(v).replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(x=>x.length>2&&!['para','com','sem','lado','peca','servico','troca','trocar','revisar','atencao','observar'].includes(x)));
   }
-  function similarity(a,b){
-    const A=tokens(a),B=tokens(b); if(!A.size||!B.size) return 0;
+
+  function semanticSimilarity(a,b){
+    const pa=canonical(a),pb=canonical(b);
+    if(!pa||!pb) return 0;
+
+    const axA=axleOf(pa),axB=axleOf(pb),sideA=sideOf(pa),sideB=sideOf(pb);
+    if(axA&&axB&&axA!==axB) return 0;
+    if(sideA&&sideB&&sideA!==sideB) return 0;
+
+    const ca=concepts(pa),cb=concepts(pb);
+    let conceptHit=false;
+    ca.forEach(x=>{if(cb.has(x)) conceptHit=true;});
+
+    const A=tokens(pa),B=tokens(pb);
     let inter=0; A.forEach(x=>{if(B.has(x)) inter++;});
-    return inter/Math.max(A.size,B.size);
+    const lexical=A.size&&B.size?inter/Math.max(A.size,B.size):0;
+
+    let score=lexical;
+    if(conceptHit) score=Math.max(score,.82);
+    if(pa===pb) score=1;
+    else if(pa.includes(pb)||pb.includes(pa)) score=Math.max(score,.9);
+    if(axA&&axB&&axA===axB) score=Math.min(1,score+.06);
+    if(sideA&&sideB&&sideA===sideB) score=Math.min(1,score+.06);
+    return score;
   }
+
+  function similarity(a,b){ return semanticSimilarity(a,b); }
+
   function bestWorkMatch(purchase,items){
     const pdesc=clean(purchase?.descricao||purchase?.desc),pcode=norm(purchase?.codigo||'');
     let best=null,score=0;
     (items||[]).filter(x=>x.tipo==='peca').forEach(item=>{
-      let s=similarity(pdesc,item.descricao);
+      let s=semanticSimilarity(pdesc,item.descricao);
       const icode=norm(item.codigo||'');
       if(pcode&&icode&&pcode===icode) s=Math.max(s,1);
       else if(pcode&&icode&&(pcode.includes(icode)||icode.includes(pcode))) s=Math.max(s,.88);
       if(s>score){score=s;best=item;}
     });
-    return {item:score>=.5?best:null,score};
+    return {item:score>=.58?best:null,score};
+  }
+
+  function matchChecklistItems(checkItems,workItems){
+    const relations={},matched=[],actionMismatch=[],checklistOnly=[];
+    const matchedWork=new Set();
+
+    (checkItems||[]).forEach(ci=>{
+      const candidates=(workItems||[]).map(w=>({work:w,score:semanticSimilarity(ci.item,w.descricao)}))
+        .filter(x=>x.score>=.58)
+        .sort((a,b)=>b.score-a.score);
+      if(!candidates.length){
+        checklistOnly.push(ci);
+        return;
+      }
+
+      const best=candidates[0].score;
+      const chosen=candidates.filter(x=>x.score>=Math.max(.58,best-.10));
+      chosen.forEach(x=>{
+        matchedWork.add(x.work.key);
+        if(!relations[x.work.key]) relations[x.work.key]=[];
+        relations[x.work.key].push({check:ci,score:x.score});
+      });
+
+      const entry={check:ci,workMatches:chosen.map(x=>x.work),score:best};
+      if(ci.group==='atencao') actionMismatch.push(entry);
+      else matched.push(entry);
+    });
+
+    const workOnly=(workItems||[]).filter(w=>!matchedWork.has(w.key));
+    return {matched,actionMismatch,checklistOnly,workOnly,relations};
   }
 
   function checklistComparison(os,plan){
     const cp=D.checklistPlan(os);
-    const check=[...cp.pecasTrocar,...cp.servicosExecutar,...cp.atencoes];
-    const work=(plan?.all||[]).slice();
-    const used=new Set(),matched=[],checklistOnly=[];
-    check.forEach(ci=>{
-      let best=null,bestScore=0;
-      work.forEach(w=>{
-        if(used.has(w.key)) return;
-        const s=similarity(ci.item,w.descricao);
-        if(s>bestScore){bestScore=s;best=w;}
-      });
-      if(best&&bestScore>=.5){used.add(best.key);matched.push({check:ci,work:best,score:bestScore});}
-      else checklistOnly.push(ci);
-    });
-    const workOnly=work.filter(w=>!used.has(w.key));
-    return {matched,checklistOnly,workOnly,check};
+    const partChecks=[...(cp.pecasTrocar||[]),...(cp.atencoes||[])];
+    const serviceChecks=[...(cp.servicosExecutar||[])];
+
+    const parts=matchChecklistItems(partChecks,plan?.pieces||[]);
+    const services=matchChecklistItems(serviceChecks,plan?.services||[]);
+
+    return {
+      matched:parts.matched,
+      actionMismatch:parts.actionMismatch,
+      checklistOnly:parts.checklistOnly,
+      workOnly:parts.workOnly,
+      workRelations:parts.relations,
+      serviceMatched:services.matched,
+      serviceChecklistOnly:services.checklistOnly,
+      serviceWorkOnly:services.workOnly,
+      serviceRelations:services.relations,
+      check:[...partChecks,...serviceChecks]
+    };
   }
+
 
   async function loadReferencesForOS(db,session,os){
     const refs={vehicles:[],clients:[]};
@@ -256,7 +423,7 @@
   Object.assign(D,{
     isOfficialClient,isCiliaPiece,isCiliaService,isNFPurchaseOnlyPiece,
     workState,workStatus,doneStatus,blockedStatus,inProgressStatus,statusLabel,buildWorkPlan,setWorkState,
-    purchaseLinks,purchaseLinkForNF,purchaseLinkForWork,setPurchaseLink,bestWorkMatch,similarity,checklistComparison,
+    purchaseLinks,purchaseLinkForNF,purchaseLinkForWork,setPurchaseLink,bestWorkMatch,similarity,semanticSimilarity,concepts,checklistComparison,
     loadReferencesForOS,loadOperationalExtrasEfficient
   });
 })();
