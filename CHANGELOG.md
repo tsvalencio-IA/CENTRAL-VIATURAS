@@ -219,3 +219,17 @@
 - Tela individual reduz leituras: busca somente referências necessárias e não relê NF/cotações a cada snapshot da O.S.
 - Impressão operacional respeita o mesmo perfil e a mesma regra de cliente oficial/normal da tela.
 - Nova identidade PWA Valêncio SOS preservando o ID e scope exclusivos /CENTRAL-VIATURAS/.
+
+
+## 1.4.13 — 2026-10-02
+
+- Reorganizada a visão da gestão para mostrar explicitamente FALTA COMPRAR e COMPRADAS / VINCULADAS.
+- FALTA COMPRAR lista as peças ativas da O.S./Cilia sem vínculo de compra; compras vinculadas ficam em bloco separado e minimizado.
+- Peças sem compra aparecem primeiro também na fila de execução.
+- A comparação do checklist deixou de misturar indiscriminadamente peças, serviços e atenções.
+- Comparação de peças ganhou equivalência semântica e sinônimos automotivos, incluindo PIVÔ/PIVÔS, BIELETA/HASTE DA BARRA ESTABILIZADORA, BANDEJA/BRAÇO OSCILANTE, amortecedores, buchas, coxins, rolamentos, correias, bomba d'água, bomba de combustível, palhetas e outros.
+- Um item genérico do checklist pode corresponder a mais de uma peça específica da O.S.; por exemplo PIVÔS pode conferir com pivô direito e pivô esquerdo.
+- Se o componente for o mesmo, mas o checklist estiver em REVISAR/ATENÇÃO e a O.S. determinar troca, a gestão vê MESMA PEÇA, AÇÃO DIFERENTE.
+- Serviços possuem contagem comparativa separada e não distorcem mais a conferência de peças.
+- Cada peça da lista de compra mostra se o checklist confere, diverge na ação ou não localizou o componente.
+- Nenhuma dessas visualizações gera escrita adicional no Firebase; só ações reais continuam gravando.
