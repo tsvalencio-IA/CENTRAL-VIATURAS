@@ -166,7 +166,7 @@
   function isCollapsed(id){
     const saved=localStorage.getItem(collapseStoreKey(id));
     if(saved!==null) return saved==='1';
-    return id==='completed';
+    return id==='completed'||id==='buy-linked';
   }
   function setCollapsed(id,value){ localStorage.setItem(collapseStoreKey(id),value?'1':'0'); }
 
