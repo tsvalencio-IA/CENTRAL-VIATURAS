@@ -1,7 +1,7 @@
 'use strict';
 
 window.CENTRAL_CONFIG = {
-  version: '1.4.12',
+  version: '1.4.13',
   appName: 'Valêncio SOS',
   footer: 'Powered by thIAguinho Soluções Digitais',
   firebaseConfig: {
